@@ -1019,7 +1019,7 @@ def create_bt_socket(interface=0):
 
 ###########
 
-class BTScanRequester(asyncio.Protocol):
+class BLEScanRequester(asyncio.Protocol):
     '''Protocol handling the requests'''
     def __init__(self):
         self.transport = None

@@ -40,7 +40,7 @@ except Exception as e:
 def my_process(data):
     global opts
 
-    ev=HCI_Event()
+    ev=aiobs.HCI_Event()
     xx=ev.decode(data)
     xx=aiobs.RuuviWeather(ev)
     if opts.eddy:
@@ -65,7 +65,7 @@ event_loop = asyncio.get_event_loop()
 mysocket = aiobs.create_bt_socket(mydev)
 
 #create a connection with the raw socket
-fac=event_loop.create_connection(BTScanRequester,sock=mysocket)
+fac=event_loop.create_connection(aiobs.BLEScanRequester,sock=mysocket)
 #Start it
 conn,btctrl = event_loop.run_until_complete(fac)
 #Attach your processing 
