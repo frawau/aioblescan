@@ -42,12 +42,12 @@ def my_process(data):
 
     ev=aiobs.HCI_Event()
     xx=ev.decode(data)
-    xx=aiobs.RuuviWeather(ev)
     if opts.eddy:
         xx=aiobs.EddyStone(ev)
         if xx:
             print("Google Beacon {}".format(xx))
     elif opts.ruuvi:
+        xx=aiobs.RuuviWeather(ev)
         if xx:
             print("Weather info {}".format(xx))
     else:
