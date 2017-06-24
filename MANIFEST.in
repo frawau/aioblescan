@@ -1,0 +1,2 @@
+include *.txt setup.cfg
+recursive-include *.txt *.py
