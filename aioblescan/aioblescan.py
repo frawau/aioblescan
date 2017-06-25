@@ -295,7 +295,7 @@ class OgfOcf:
         self.ocf= ocf
         
     def encode (self):
-        val=pack(">H",(ord(self.ogf) << 10) | ord(self.ocf))
+        val=pack("<H",(ord(self.ogf) << 10) | ord(self.ocf))
         return val
     
     def decode(self,data):
@@ -495,10 +495,10 @@ class Packet:
           
 class HCI_Command(Packet):
     
-    def __init__(self,ogf,ocf,payload=[]):
+    def __init__(self,ogf,ocf):
         super().__init__(HCI_COMMAND)
-        self.cmd = OgfOcf(ogf,ocf)
-        self.payload = payload
+        self.cmd = OgfOcf("command",ogf,ocf)
+        self.payload = []
     
     def encode(self):
         pld=b""
@@ -516,9 +516,9 @@ class HCI_Command(Packet):
 class HCI_Cmd_LE_Scan_Enable(HCI_Command):
     
     def __init__(self,enable=True,filter_dups=True):
-        super().__init__(b"\x08",b"\x0c")
-        self.payload.append(Bool(enable))
-        self.payload.append(Bool(filter_dups))
+        super(self.__class__, self).__init__(b"\x08",b"\x0c")
+        self.payload.append(Bool("enable",enable))
+        self.payload.append(Bool("filter",filter_dups))
         
 ####
 # HCI EVents
@@ -1033,15 +1033,17 @@ class BLEScanRequester(asyncio.Protocol):
     def connection_lost(self, exc):
         super().connection_lost(exc)
         
-    def request(self):
-        """Send Name request, mac_addr is a list of mac addresses"""
-        self.send_scan_request()
-       
-    
         
     def send_scan_request(self):
-        '''Sending ARP request for given IP'''
+        '''Sending LE scan request'''
         command=HCI_Cmd_LE_Scan_Enable(True,False)
+        self.transport.write(command.encode())
+        
+    def stop_scan_request(self):
+        '''Sending LE scan request'''
+        command=HCI_Cmd_LE_Scan_Enable(False,False)
+        command=HCI_Cmd_LE_Scan_Enable(False,False)
+        print("Sending {}".format(command.encode()))
         self.transport.write(command.encode())
         
     def data_received(self, packet):

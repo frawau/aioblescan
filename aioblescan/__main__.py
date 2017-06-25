@@ -71,7 +71,7 @@ conn,btctrl = event_loop.run_until_complete(fac)
 #Attach your processing 
 btctrl.process=my_process
 #Probe
-btctrl.request()
+btctrl.send_scan_request()
 try:
     # event_loop.run_until_complete(coro)
     event_loop.run_forever()
@@ -79,5 +79,6 @@ except KeyboardInterrupt:
     print('keyboard interrupt')
 finally:
     print('closing event loop')
+    btctrl.stop_scan_request()
     conn.close()
     event_loop.close()
