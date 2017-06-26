@@ -48,7 +48,7 @@ EDDY_UUID=b"\xfe\xaa"    #Google UUID
 class MACAddr:
     def __init__(self,name,mac="00:00:00:00:00:00"):
         self.name = name
-        self.val=mac
+        self.val=mac.lower()
         
     def encode (self):
         return int(self.val.replace(":",""),16).to_bytes(6,"little")
@@ -571,7 +571,6 @@ class HCI_CC_Event(Packet):
    
     
     def decode(self,data):
-        print ("Got: {}".format(data))
         for x in self.payload:
             data=x.decode(data)
         return data

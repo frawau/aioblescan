@@ -24,13 +24,24 @@
 import sys
 import asyncio
 import argparse
+import re
 import aioblescan as aiobs
+
+def check_mac(val):
+    try:
+        if re.match("[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", val.lower()):
+            return val.lower()
+    except:
+        pass
+    raise argparse.ArgumentTypeError("%s is not a MAC address" % val)
 
 parser = argparse.ArgumentParser(description="Track BLE advertised packets")
 parser.add_argument("-e", "--eddy", action='store_true', default=False,
                     help="Look specificaly for Eddystone messages.")
 parser.add_argument("-r","--ruuvi", action='store_true', default=False,
                     help="Look only for Ruuvi tag Weather station messages")
+parser.add_argument("-m", "--mac", type=check_mac, action='append',
+                    help="Look for these MAC addresses.")
 try:
     opts = parser.parse_args()
 except Exception as e:
@@ -42,6 +53,16 @@ def my_process(data):
 
     ev=aiobs.HCI_Event()
     xx=ev.decode(data)
+    if opts.mac:
+        goon = False
+        mac= ev.retrieve("peer")
+        for x in mac:
+            if x.val in opts.mac:
+                goon=True
+                break
+        if not goon:
+            return
+        
     if opts.eddy:
         xx=aiobs.EddyStone(ev)
         if xx:

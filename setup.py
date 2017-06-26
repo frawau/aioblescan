@@ -4,13 +4,13 @@ from distutils.core import setup
 
 setup(name='aioblescan',
     packages=['aioblescan'],
-    version='0.1.1',
+    version='0.1.3',
     author='François Wautier',
     author_email='francois@wautier.eu',
     description='Scanning Bluetooth for advertised info with asyncio.',
     url='http://github.com/frawau/aioblescan',
-    download_url='https://github.com/frawau/aioblescan/archive/0.1.1.tar.gz',  
-    keywords = ['bluetooth', 'advertising', 'hci'], 
+    download_url='https://github.com/frawau/aioblescan/archive/0.1.3.tar.gz',  
+    keywords = ['bluetooth', 'advertising', 'hci', 'ble'], 
     license='MIT',
     install_requires=[],
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
