@@ -90,11 +90,11 @@ class Byte:
         self.val=val
         
     def encode (self):
-        val=pack(">c",self.val)
+        val=pack("<c",self.val)
         return val
     
     def decode(self,data):
-        self.val= unpack(">c",data[:1])[0]
+        self.val= unpack("<c",data[:1])[0]
         return data[1:]
         
     def __len__(self):
@@ -299,14 +299,14 @@ class OgfOcf:
         return val
     
     def decode(self,data):
-        val = unpack(">H",data[:len(self)])[0]
+        val = unpack("<H",data[:len(self)])[0]
         self.ogf =val>>10
         self.ocf = int(val - (self.ogf<<10)).to_bytes(1,"big")
         self.ogf = int(self.ogf).to_bytes(1,"big")
         return data[len(self):]
         
     def __len__(self):
-        return calcsize(">H")
+        return calcsize("<H")
     
     def show(self,depth=0):
         print("{}Cmd Group:".format(PRINT_INDENT*depth))
@@ -571,12 +571,12 @@ class HCI_CC_Event(Packet):
    
     
     def decode(self,data):
+        print ("Got: {}".format(data))
         for x in self.payload:
             data=x.decode(data)
         return data
             
     def show(self,depth=0):
-        print("{}{}:".format(PRINT_INDENT*depth),self.name)
         for x in self.payload:
             x.show(depth+1)
             
@@ -694,7 +694,7 @@ class HCI_LEM_Adv_Report(Packet):
                 
             data=data[length.val-len(code):]
         if data:
-            myinfo=IntByte("RSSI")
+            myinfo=IntByte("rssi")
             data=myinfo.decode(data)
             self.payload.append(myinfo)
         return data
@@ -832,10 +832,10 @@ def EddyStone(packet):
     data=etype.decode(data)
     found.payload.append(etype)
     if etype.val== 0x00:
-        power=IntByte("power")
+        power=IntByte("tx_power")
         data=power.decode(data[:len(power)])
         found.payload.append(power)
-        result["power"]=power.val
+        result["tx_power"]=power.val
         
         nspace=Itself("namespace")
         xx=nspace.decode(data[:10])  #According to https://github.com/google/eddystone/tree/master/eddystone-uid
@@ -850,10 +850,10 @@ def EddyStone(packet):
         result["instance"]=nspace.val
         
     elif etype.val== 0x10:
-        power=IntByte("power")
+        power=IntByte("tx_power")
         data=power.decode(data)
         found.payload.append(power)
-        result["power"]=power.val
+        result["tx_power"]=power.val
         
         url=EnumByte("type",0,{0x00:"http://www.",0x01:"https://www.",0x02:"http://",0x03:"https://"})
         data=url.decode(data)
@@ -919,6 +919,13 @@ def EddyStone(packet):
         xx=Itself("data")
         xx.decode(data)
         found.payload.append(xx)
+        
+    rssi=packet.retrieve("rssi")
+    if rssi:
+        result["rssi"]=rssi[-1].val
+    mac=packet.retrieve("peer")
+    if mac:
+        result["mac address"]=mac[-1].val
     return result
         
 ##
@@ -947,6 +954,12 @@ def RuuviWeather(packet):
         
         else:
             return None
+    rssi=packet.retrieve("rssi")
+    if rssi:
+        result["rssi"]=rssi[-1].val
+    power=packet.retrieve("tx_power")
+    if power:
+        result["tx_power"]=power[-1].val
     if "//ruu.vi/" in url["url"]:
         #We got a live one
         result["mac address"]=packet.retrieve("peer")[0].val
@@ -1042,8 +1055,6 @@ class BLEScanRequester(asyncio.Protocol):
     def stop_scan_request(self):
         '''Sending LE scan request'''
         command=HCI_Cmd_LE_Scan_Enable(False,False)
-        command=HCI_Cmd_LE_Scan_Enable(False,False)
-        print("Sending {}".format(command.encode()))
         self.transport.write(command.encode())
         
     def data_received(self, packet):
