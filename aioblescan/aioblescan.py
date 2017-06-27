@@ -461,6 +461,7 @@ class Packet:
         self.header = header
         self.fmt = fmt
         self.payload=[]
+        self.raw_data=None
         
     def encode (self) :
         return pack(self.fmt, self.header)
@@ -468,6 +469,7 @@ class Packet:
     def decode (self, data):
         try:
             if unpack(self.fmt,data[:calcsize(self.fmt)])[0] == self.header:
+                self.raw_data=data
                 return data[calcsize(self.fmt):]
         except:
             pass
@@ -532,10 +534,8 @@ class HCI_Event(Packet):
         self.payload.append(UIntByte("length"))
         
     def decode(self,data):
-        try:
-            if unpack(self.fmt,data[:calcsize(self.fmt)])[0] == self.header:
-                data=data[calcsize(self.fmt):]
-        except:
+        data=super().decode(data)
+        if data is None:
             return None
         
         for x in self.payload:

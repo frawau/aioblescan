@@ -38,10 +38,12 @@ def check_mac(val):
 parser = argparse.ArgumentParser(description="Track BLE advertised packets")
 parser.add_argument("-e", "--eddy", action='store_true', default=False,
                     help="Look specificaly for Eddystone messages.")
-parser.add_argument("-r","--ruuvi", action='store_true', default=False,
-                    help="Look only for Ruuvi tag Weather station messages")
 parser.add_argument("-m", "--mac", type=check_mac, action='append',
                     help="Look for these MAC addresses.")
+parser.add_argument("-r","--ruuvi", action='store_true', default=False,
+                    help="Look only for Ruuvi tag Weather station messages")
+parser.add_argument("-R","--raw", action='store_true', default=False,
+                    help="Also show the raw data.")
 try:
     opts = parser.parse_args()
 except Exception as e:
@@ -62,7 +64,9 @@ def my_process(data):
                 break
         if not goon:
             return
-        
+
+    if opts.raw:
+        print("Raw data: {}".format(ev.raw_data))
     if opts.eddy:
         xx=aiobs.EddyStone(ev)
         if xx:
