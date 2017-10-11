@@ -9,6 +9,7 @@ We are on PyPi so
 
      pip3 install aioblescan
 or
+
      python3 -m pip install aioblescan
      
 
@@ -16,17 +17,19 @@ or
 # How to use
 
 Essentially, you create a function to process the incoming
-information and you attach it to the BTScanRequester.You then crate a bluetooth
+information and you attach it to the `BTScanRequester`. You then create a Bluetooth
 connection, you issue the scan command and wait for incoming packets and process them.
 
-You can use EddyStone or RuuviWeather to retrieve specific information
+You can use Eddystone or RuuviWeather to retrieve specific information
 
 
-The easiest way is to look at the __main__ file. You can run the module wuth
+The easiest way is to look at the `__main__.py` file. 
+
+You can run the module with
 
     python3 -m aioblescan
     
-"-h" for help.
+Add `-h` for help.
 
 To see the RuuviTag weather information try:
 
@@ -140,5 +143,5 @@ Why not use scapy?
 What can you track?
 
     aioblescan will try to parse all the incoming advertized information. You can see
-    the raw data when it does not know what to do. With EddyStone beacon you can see the
+    the raw data when it does not know what to do. With Eddystone beacon you can see the
     URL, Telemetry and UID
