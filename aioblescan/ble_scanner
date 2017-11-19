@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+import argparse
+import aioblescan
+
+
+def cmd_line_args():
+    parser = argparse.ArgumentParser(description="Track BLE advertised packets")
+    parser.add_argument("-e", "--eddystone", action='store_true', default=False,
+                        help="Look specificaly for Eddystone messages.")
+    parser.add_argument("-m", "--mac", type=aioblescan.check_mac, action='append',
+                        help="Look for these MAC addresses.")
+    parser.add_argument("-r", "--ruuvi", action='store_true', default=False,
+                        help="Look only for Ruuvi tag Weather station messages")
+    parser.add_argument("-R", "--raw", action='store_true', default=False,
+                        help="Also show the raw data.")
+    return parser.parse_args()
+
+
+def my_print(packet_data):
+    print(packet_data)
+
+
+if __name__ == '__main__':
+    args = cmd_line_args()
+    if args.raw:
+        aioblescan.start_scan(on_packet=my_print)
+    elif args.eddystone:
+        print('Scanning for Eddystone')
+        aioblescan.start_scan(on_eddystoneuid=my_print, on_eddystoneurl=my_print)
+    elif args.ruuvi:
+        aioblescan.start_scan(on_ruuvi=my_print)

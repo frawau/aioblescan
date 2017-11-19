@@ -65,6 +65,16 @@ class MACAddr:
         print("{}{}:".format(PRINT_INDENT*depth,self.name))
         print("{}{}".format(PRINT_INDENT*(depth+1),self.val))
 
+
+def check_mac(val):
+    try:
+        if re.match("[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", val.lower()):
+            return val.lower()
+    except:
+        pass
+    raise argparse.ArgumentTypeError("%s is not a MAC address" % val)
+
+
 class Bool:
     def __init__(self,name,val=True):
         self.name=name
@@ -833,7 +843,7 @@ def EddyStone(packet):
     found.payload.append(etype)
     if etype.val== 0x00:
         power=IntByte("tx_power")
-        data=power.decode(data[:len(power)])
+        data=power.decode(data)
         found.payload.append(power)
         result["tx_power"]=power.val
 
@@ -1047,6 +1057,10 @@ class BLEScanRequester(asyncio.Protocol):
         self.smac = None
         self.sip = None
         self.process = self.default_process
+        self.packet_callback = None
+        self.eddystoneuid_callback = None
+        self.eddystoneurl_callback = None
+        self.ruuvi_callback = None
 
     def connection_made(self, transport):
         self.transport = transport
@@ -1066,11 +1080,73 @@ class BLEScanRequester(asyncio.Protocol):
         self.transport.write(command.encode())
 
     def data_received(self, packet):
-        self.process(packet)
+        self.process(packet,
+                     self.packet_callback,
+                     self.eddystoneuid_callback,
+                     self.eddystoneurl_callback,
+                     self.ruuvi_callback)
 
-    def default_process(self,data):
+    def default_process(self,
+                        packet,
+                        packet_callback,
+                        eddystoneuid_callback,
+                        eddystoneurl_callback,
+                        ruuvi_callback):
         pass
 
 
+def _process_packet(data,
+                    packet_callback,
+                    eddystoneuid_callback,
+                    eddystoneurl_callback,
+                    ruuvi_callback):
+    ev = HCI_Event()
+    ev.decode(data)
+    if packet_callback is not None:
+        packet_callback(ev.raw_data)
+    if eddystoneuid_callback is not None or eddystoneurl_callback is not None:
+        eddystone_data = EddyStone(ev)
+        if eddystone_data:
+            if eddystone_data.get('name space') and eddystoneuid_callback is not None:
+                eddystoneuid_callback(eddystone_data)
+            elif eddystone_data.get('url') and eddystoneurl_callback is not None:
+                eddystoneurl_callback(eddystone_data)
+    if ruuvi_callback is not None:
+        ruuvi_data = RuuviWeather(ev)
+        if ruuvi_data:
+            ruuvi_callback(ruuvi_data)
 
+
+def start_scan(on_eddystoneuid=None,
+               on_eddystoneurl=None,
+               on_packet=None,
+               on_ruuvi=None):
+    mydev = 0
+    event_loop = asyncio.get_event_loop()
+
+    # First create and configure a raw socket
+    mysocket = create_bt_socket(mydev)
+
+    # create a connection with the raw socket
+    fac = event_loop.create_connection(BLEScanRequester, sock=mysocket)
+    # Start it
+    conn, btctrl = event_loop.run_until_complete(fac)
+    # Attach your processing
+    btctrl.process = _process_packet
+    btctrl.eddystoneuid_callback = on_eddystoneuid
+    btctrl.eddystoneurl_callback = on_eddystoneurl
+    btctrl.packet_callback = on_packet
+    btctrl.ruuvi_callback = on_ruuvi
+    # Probe
+    btctrl.send_scan_request()
+    try:
+        # event_loop.run_until_complete(coro)
+        event_loop.run_forever()
+    except KeyboardInterrupt:
+        print('keyboard interrupt')
+    finally:
+        print('closing event loop')
+        btctrl.stop_scan_request()
+        conn.close()
+        event_loop.close()
 
