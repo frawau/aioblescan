@@ -833,7 +833,7 @@ def EddyStone(packet):
     found.payload.append(etype)
     if etype.val== 0x00:
         power=IntByte("tx_power")
-        data=power.decode(data[:len(power)])
+        data=power.decode(data)
         found.payload.append(power)
         result["tx_power"]=power.val
 
