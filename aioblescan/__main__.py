@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 #
-# This application is an example on how to use aioblescan 
-# 
+# This application is an example on how to use aioblescan
+#
 # Copyright (c) 2017 François Wautier
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
@@ -15,17 +15,19 @@
 # The above copyright notice and this permission notice shall be included in all copies
 # or substantial portions of the Software.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR 
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 # IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 import sys
 import asyncio
 import argparse
 import re
 import aioblescan as aiobs
+from aioblescan.plugins import EddyStone
+
 
 def check_mac(val):
     try:
@@ -44,6 +46,10 @@ parser.add_argument("-r","--ruuvi", action='store_true', default=False,
                     help="Look only for Ruuvi tag Weather station messages")
 parser.add_argument("-R","--raw", action='store_true', default=False,
                     help="Also show the raw data.")
+parser.add_argument("-a","--advertise", action='store_true', default=False,
+                    help="Broadcast like an EddyStone Beacon.")
+parser.add_argument("-D","--device", type=int, default=0,
+                    help="Select the hciX device to use (default 0, i.e. hci0).")
 try:
     opts = parser.parse_args()
 except Exception as e:
@@ -68,16 +74,17 @@ def my_process(data):
     if opts.raw:
         print("Raw data: {}".format(ev.raw_data))
     if opts.eddy:
-        xx=aiobs.EddyStone(ev)
+        xx=EddyStone().decode(ev)
         if xx:
             print("Google Beacon {}".format(xx))
     elif opts.ruuvi:
-        xx=aiobs.RuuviWeather(ev)
+        from aioblescan.plugins import RuuviWeather
+        xx=RuuviWeather().decode(ev)
         if xx:
             print("Weather info {}".format(xx))
     else:
         ev.show(0)
-    
+
 try:
     mydev=int(sys.argv[1])
 except:
@@ -93,8 +100,16 @@ mysocket = aiobs.create_bt_socket(mydev)
 fac=event_loop.create_connection(aiobs.BLEScanRequester,sock=mysocket)
 #Start it
 conn,btctrl = event_loop.run_until_complete(fac)
-#Attach your processing 
+#Attach your processing
 btctrl.process=my_process
+if opts.advertise:
+    command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
+    btctrl.send_command(command)
+    command = aiobs.HCI_Cmd_LE_Set_Advertised_Msg(msg=EddyStone())
+    btctrl.send_command(command)
+    command = aiobs.HCI_Cmd_LE_Advertise(enable=True)
+    btctrl.send_command(command)
+
 #Probe
 btctrl.send_scan_request()
 try:
@@ -105,5 +120,7 @@ except KeyboardInterrupt:
 finally:
     print('closing event loop')
     btctrl.stop_scan_request()
+    command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
+    btctrl.send_command(command)
     conn.close()
     event_loop.close()
