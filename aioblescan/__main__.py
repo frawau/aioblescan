@@ -27,6 +27,7 @@ import argparse
 import re
 import aioblescan as aiobs
 from aioblescan.plugins import EddyStone
+from aioblescan.plugins import RuuviWeather
 
 
 def check_mac(val):
@@ -78,7 +79,6 @@ def my_process(data):
         if xx:
             print("Google Beacon {}".format(xx))
     elif opts.ruuvi:
-        from aioblescan.plugins import RuuviWeather
         xx=RuuviWeather().decode(ev)
         if xx:
             print("Weather info {}".format(xx))
