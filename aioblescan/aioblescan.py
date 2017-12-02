@@ -309,20 +309,29 @@ class ShortInt:
         :type name: str
         :param val: the integer value.
         :type val: int
+        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+        :type endian: str
         :returns: ShortInt instance.
         :rtype: ShortInt
 
     """
-    def __init__(self,name,val=0):
+    def __init__(self,name,val=0,endian="big"):
         self.name=name
         self.val=val
+        self.endian = endian
 
     def encode (self):
-        val=pack(">h",self.val)
+        if self.endian == "big":
+            val=pack(">h",self.val)
+        else:
+            val=pack("<h",self.val)
         return val
 
     def decode(self,data):
-        self.val= unpack(">h",data[:2])[0]
+        if self.endian == "big":
+            self.val= unpack(">h",data[:2])[0]
+        else:
+            self.val= unpack("<h",data[:2])[0]
         return data[2:]
 
     def __len__(self):
@@ -339,20 +348,29 @@ class UShortInt:
         :type name: str
         :param val: the integer value.
         :type val: int
+        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+        :type endian: str
         :returns: UShortInt instance.
         :rtype: UShortInt
 
     """
-    def __init__(self,name,val=0):
+    def __init__(self,name,val=0,endian="big"):
         self.name=name
         self.val=val
+        self.endian = endian
 
     def encode (self):
-        val=pack(">H",self.val)
+        if self.endian == "big":
+            val=pack(">H",self.val)
+        else:
+            val=pack("<H",self.val)
         return val
 
     def decode(self,data):
-        self.val= unpack(">H",data[:2])[0]
+        if self.endian == "big":
+            self.val= unpack(">H",data[:2])[0]
+        else:
+            self.val= unpack("<H",data[:2])[0]
         return data[2:]
 
     def __len__(self):
@@ -369,20 +387,29 @@ class LongInt:
         :type name: str
         :param val: the integer value.
         :type val: int
+        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+        :type endian: str
         :returns: LongInt instance.
         :rtype: LongInt
 
     """
-    def __init__(self,name,val=0):
+    def __init__(self,name,val=0,endian="big"):
         self.name=name
         self.val=val
+        self.endian = endian
 
     def encode (self):
-        val=pack(">l",self.val)
+        if self.endian == "big":
+            val=pack(">l",self.val)
+        else:
+            val=pack("<l",self.val)
         return val
 
     def decode(self,data):
-        self.val= unpack(">l",data[:4])[0]
+        if self.endian == "big":
+            self.val= unpack(">l",data[:4])[0]
+        else:
+            self.val= unpack("<l",data[:4])[0]
         return data[4:]
 
     def __len__(self):
@@ -399,20 +426,29 @@ class ULongInt:
         :type name: str
         :param val: the integer value.
         :type val: int
+        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+        :type endian: str
         :returns: ULongInt instance.
         :rtype: ULongInt
 
     """
-    def __init__(self,name,val=0):
+    def __init__(self,name,val=0,endian="big"):
         self.name=name
         self.val=val
+        self.endian = endian
 
     def encode (self):
-        val=pack(">L",self.val)
+        if self.endian == "big":
+            val=pack(">L",self.val)
+        else:
+            val=pack("<L",self.val)
         return val
 
     def decode(self,data):
-        self.val= unpack(">L",data[:4])[0]
+        if self.endian == "big":
+            self.val= unpack(">L",data[:4])[0]
+        else:
+            self.val= unpack("<L",data[:4])[0]
         return data[4:]
 
     def __len__(self):
@@ -738,6 +774,55 @@ class HCI_Cmd_LE_Scan_Enable(HCI_Command):
         self.payload.append(Bool("enable",enable))
         self.payload.append(Bool("filter",filter_dups))
 
+class HCI_Cmd_LE_Set_Scan_Params(HCI_Command):
+    """Class representing an HCI command to set the scanning parameters.
+
+    This will set a number of parameters related to the scanning functions. For the
+    interval and window, it will always silently enforce the Specs that says it should be >= 2.5 ms
+    and <= 10.24s. It will also silently enforce window <= interval
+
+        :param scan_type: Type of scanning. 0 => Passive (default)
+                                            1 => Active
+        :type scan_type: int
+        :param interval: Time in ms between the start of a scan and the next scan start. Default 10
+        :type interval: int/float
+        :param window: maximum advertising interval in ms. Default 10
+        :type window: int.float
+        :param oaddr_type: Type of own address Value 0 => public (default)
+                                                     1 => Random
+                                                     2 => Private with public fallback
+                                                     3 => Private with random fallback
+        :type oaddr_type: int
+        :param filter: How white list filter is applied. 0 => No filter (Default)
+                                                         1 => sender must be in white list
+                                                         2 => Similar to 0. Some directed advertising may be received.
+                                                         3 => Similar to 1. Some directed advertising may be received.
+        :type filter: int
+        :returns: HCI_Cmd_LE_Scan_Params instance.
+        :rtype: HCI_Cmd_LE_Scan_Params
+
+    """
+
+    def __init__(self,scan_type=0x0,interval=10, window=750, oaddr_type=0,filter=0):
+
+        super(self.__class__, self).__init__(b"\x08",b"\x0b")
+        self.payload.append(EnumByte("scan type",scan_type,
+                                     {0: "Passive",
+                                      1: "Active"}))
+        self.payload.append(UShortInt("Interval",int(round(min(10240,max(2.5,interval))/0.625)),endian="little"))
+        self.payload.append(UShortInt("Window",int(round(min(10240,max(2.5,min(interval,window)))/0.625)),endian="little"))
+        self.payload.append(EnumByte("own addresss type",oaddr_type,
+                                     {0: "Public",
+                                      1: "Random",
+                                      2: "Private IRK or Public",
+                                      3: "Private IRK or Random"}))
+        self.payload.append(EnumByte("filter policy",filter,
+                                     {0: "None",
+                                      1: "Sender In White List",
+                                      2: "Almost None",
+                                      3: "SIWL and some"}))
+
+
 class HCI_Cmd_LE_Advertise(HCI_Command):
     """Class representing a command HCI command to enable/disable BLE advertising.
 
@@ -752,18 +837,6 @@ class HCI_Cmd_LE_Advertise(HCI_Command):
         super(self.__class__, self).__init__(b"\x08",b"\x0a")
         self.payload.append(Bool("enable",enable))
 
-class HCI_Cmd_Reset(HCI_Command):
-    """Class representing an HCI command to reset the adapater.
-
-
-        :returns: HCI_Cmd_Reset instance.
-        :rtype: HCI_Cmd_Reset
-
-    """
-
-    def __init__(self):
-        super(self.__class__, self).__init__(b"\x03",b"\x03")
-
 class HCI_Cmd_LE_Set_Advertised_Msg(HCI_Command):
     """Class representing an HCI command to set the advertised content.
 
@@ -777,6 +850,87 @@ class HCI_Cmd_LE_Set_Advertised_Msg(HCI_Command):
     def __init__(self,msg=EmptyPayload()):
         super(self.__class__, self).__init__(b"\x08",b"\x08")
         self.payload.append(msg)
+
+class HCI_Cmd_LE_Set_Advertised_Params(HCI_Command):
+    """Class representing an HCI command to set the advertised parameters.
+
+    This will set a number of parameters relted to the advertising functions. For the
+    min and max intervals, it will always silently enforce the Specs that says it should be >= 20ms
+    and <= 10.24s. It will also silently enforce interval_max >= interval_min
+
+        :param interval_min: minimum advertising interval in ms. Default 500
+        :type interval_min: int/float
+        :param interval_max: maximum advertising interval in ms. Default 750
+        :type interval_max: int/float
+        :param adv_type: Type of advertising. Value 0 +> Connectable, Scannable advertising
+                                                    1 => Connectable directed advertising (High duty cycle)
+                                                    2 => Scannable Undirected advertising
+                                                    3 => Non connectable undirected advertising (default)
+        :type adv_type: int
+        :param oaddr_type: Type of own address Value 0 => public (default)
+                                                     1 => Random
+                                                     2 => Private with public fallback
+                                                     3 => Private with random fallback
+        :type oaddr_type: int
+        :param paddr_type: Type of peer address Value 0 => public (default)
+                                                      1 => Random
+        :type paddr_type: int
+        :param peer_addr: Peer MAC address Default 00:00:00:00:00:00
+        :type peer_addr: str
+        :param cmap: Channel map. A bit field dfined as  "Channel 37","Channel 38","Channel 39","RFU","RFU","RFU","RFU","RFU"
+        Default value is 0x7. The value 0x0 is RFU.
+        :type cmap: int
+        :param filter: How white list filter is applied. 0 => No filter (Default)
+                                                         1 => scan are filtered
+                                                         2 => Connection are filtered
+                                                         3 => scan and connection are filtered
+        :type filter: int
+        :returns: HCI_Cmd_LE_Scan_Params instance.
+        :rtype: HCI_Cmd_LE_Scan_Params
+
+    """
+
+    def __init__(self,interval_min=500, interval_max=750,
+                       adv_type=0x3, oaddr_type=0, paddr_type=0,
+                       peer_addr="00:00:00:00:00:00", cmap=0x7, filter=0):
+
+        super(self.__class__, self).__init__(b"\x08",b"\x06")
+        self.payload.append(UShortInt("Adv minimum",int(round(min(10240,max(20,interval_min))/0.625)),endian="little"))
+        self.payload.append(UShortInt("Adv maximum",int(round(min(10240,max(20,max(interval_min,interval_max)))/0.625)),endian="little"))
+        self.payload.append(EnumByte("adv type",adv_type,
+                                        {0: "ADV_IND",
+                                         1: "ADV_DIRECT_IND high",
+                                         2: "ADV_SCAN_IND",
+                                         3: "ADV_NONCONN_IND",
+                                         4: "ADV_DIRECT_IND low"}))
+        self.payload.append(EnumByte("own addresss type",paddr_type,
+                                     {0: "Public",
+                                      1: "Random",
+                                      2: "Private IRK or Public",
+                                      3: "Private IRK or Random"}))
+        self.payload.append(EnumByte("peer addresss type",oaddr_type,
+                                     {0: "Public",
+                                      1: "Random"}))
+        self.payload.append(MACAddr("peer",mac=peer_addr))
+        self.payload.append(BitFieldByte("Channels",cmap,["Channel 37","Channel 38","Channel 39","RFU","RFU","RFU","RFU", "RFU"]))
+
+        self.payload.append(EnumByte("filter policy",filter,
+                                     {0: "None",
+                                      1: "Scan",
+                                      2: "Connection",
+                                      3: "Scan and Connection"}))
+
+class HCI_Cmd_Reset(HCI_Command):
+    """Class representing an HCI command to reset the adapater.
+
+
+        :returns: HCI_Cmd_Reset instance.
+        :rtype: HCI_Cmd_Reset
+
+    """
+
+    def __init__(self):
+        super(self.__class__, self).__init__(b"\x03",b"\x03")
 
 
 ####
