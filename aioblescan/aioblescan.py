@@ -1248,10 +1248,11 @@ class BLEScanRequester(asyncio.Protocol):
 
     def connection_made(self, transport):
         self.transport = transport
+        command=HCI_Cmd_LE_Set_Scan_Params()
+        self.transport.write(command.encode())
 
     def connection_lost(self, exc):
         super().connection_lost(exc)
-
 
     def send_scan_request(self):
         '''Sending LE scan request'''
@@ -1272,7 +1273,3 @@ class BLEScanRequester(asyncio.Protocol):
 
     def default_process(self,data):
         pass
-
-
-
-
