@@ -31,6 +31,12 @@ from aioblescan.plugins import EddyStone
 # A few convenience functions
 #
 
+# Get sign using first bit and return value with sign
+def s8(value):
+    if (value >> 7) & 1:
+        return -(value & ~(1 << 7))
+    return (value & ~(1 << 7))
+
 # Ruuvi tag stuffs
 
 class RuuviWeather(object):
@@ -50,6 +56,9 @@ class RuuviWeather(object):
     def decode(self,packet):
         #Look for Ruuvi tag URL and decode it
         result={}
+        rssi=packet.retrieve("rssi")
+        if rssi:
+            result["rssi"]=rssi[-1].val
         url=EddyStone().decode(packet)
         if url is None:
             url=packet.retrieve("Payload for mfg_specific_data")
@@ -60,7 +69,7 @@ class RuuviWeather(object):
                     result["mac address"]=packet.retrieve("peer")[0].val
                     val=val[2:]
                     result["humidity"]=val[1]/2.0
-                    result["temperature"]=unpack(">b",int(val[2]).to_bytes(1,"big"))[0]
+                    result["temperature"]=s8(val[2])
                     result["temperature"]+=val[3]/100.0
                     result["pressure"]=int.from_bytes(val[4:6],"big")+50000
                     dx=int.from_bytes(val[6:8],"big",signed=True)
@@ -73,9 +82,6 @@ class RuuviWeather(object):
 
             else:
                 return None
-        rssi=packet.retrieve("rssi")
-        if rssi:
-            result["rssi"]=rssi[-1].val
         power=packet.retrieve("tx_power")
         if power:
             result["tx_power"]=power[-1].val
