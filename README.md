@@ -11,7 +11,7 @@ We are on PyPi so
 or
 
      python3 -m pip install aioblescan
-     
+
 
 
 # How to use
@@ -23,36 +23,36 @@ connection, you issue the scan command and wait for incoming packets and process
 You can use Eddystone or RuuviWeather to retrieve specific information
 
 
-The easiest way is to look at the `__main__.py` file. 
+The easiest way is to look at the `__main__.py` file.
 
 You can run the module with
 
     python3 -m aioblescan
-    
+
 Add `-h` for help.
 
 To see the RuuviTag weather information try:
 
     python3 -m aioblescan -r
-    
+
 You will get
 
     Weather info {'rssi': -64, 'pressure': 100300, 'temperature': 24, 'mac address': 'fb:86:84:dd:aa:bb', 'tx_power': -7, 'humidity': 36.0}
     Weather info {'rssi': -62, 'pressure': 100300, 'temperature': 24, 'mac address': 'fb:86:84:dd:aa:bb', 'tx_power': -7, 'humidity': 36.0}
-    
+
 To check Eddystone beacon
 
     python3 -m aioblescan -e
 
 You get
-    
+
     Google Beacon {'tx_power': -7, 'url': 'https://ruu.vi/#BEgYAMR8n', 'mac address': 'fb:86:84:dd:aa:bb', 'rssi': -52}
     Google Beacon {'tx_power': -7, 'url': 'https://ruu.vi/#BEgYAMR8n', 'mac address': 'fb:86:84:dd:aa:bb', 'rssi': -53}
 
 For a generic advertise packet scanning
 
-    python3 -m aioblescan 
-    
+    python3 -m aioblescan
+
 You get
 
     HCI Event:
@@ -121,12 +121,16 @@ You get
 
 Here the first packet is from a Wynd device, the second from a Ruuvi Tag
 
+
+aioblescan can also send EddyStone advertising. Try the -a flag when running the module.
+
+
 # FAQ
 
 Why not use scapy?
 
     Scapy is great and you can do
-    
+
         import scapy.all as sa
         test=sa.BluetoothHCISocket(0)
         command=sa.HCI_Cmd_LE_Set_Scan_Enable(enable=1,filter_dups=0)
@@ -139,7 +143,7 @@ Why not use scapy?
     installation can be haphazard, with some version not installing at all. Also
     scapy inludes a lot of other protocols and could be an overkill... lastly it
     is never too late to learn...
-    
+
 What can you track?
 
     aioblescan will try to parse all the incoming advertized information. You can see

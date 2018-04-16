@@ -6,6 +6,8 @@
 #
 # Copyright (c) 2017 François Wautier
 #
+# Note large part of this code was taken from scapy and other opensource software
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -25,8 +27,6 @@
 
 import socket, asyncio, sys
 from struct import pack, unpack, calcsize
-from base64 import b64decode
-from math import sqrt
 
 
 #A little bit of HCI
@@ -43,19 +43,48 @@ CMD_SCAN_REQUEST = 0x200c #mixing the OGF in with that HCI shift
 #
 EDDY_UUID=b"\xfe\xaa"    #Google UUID
 
+#Generated from https://www.uuidgenerator.net/ 906ed6ab-6785-4eab-9847-bf9889c098ae alternative is 668997f8-4acd-48ea-b35b-749e54215860
+MY_UUID = b'\x90\x6e\xd6\xab\x67\x85\x4e\xab\x98\x47\xbf\x98\x89\xc0\x98\xae'
+#MY_UUID = b'\x66\x89\x97\xf8\x4a\xcd\x48\xea\xb3\x5b\x74\x9e\x54\x21\x58\x60'
 #
 # Let's define some useful types
 #
 class MACAddr:
+    """Class representing a MAC address.
+
+        :param name: The name of the instance
+        :type name: str
+        :param mac: the mac address.
+        :type mac: str
+        :returns: MACAddr instance.
+        :rtype: MACAddr
+
+    """
     def __init__(self,name,mac="00:00:00:00:00:00"):
         self.name = name
         self.val=mac.lower()
 
     def encode (self):
+        """Encode the MAC address to a byte array.
+
+            :returns: The encoded version of the MAC address
+            :rtype: bytes
+        """
         return int(self.val.replace(":",""),16).to_bytes(6,"little")
 
     def decode(self,data):
-        self.val=':'.join(a + b for a, b in list(zip(*[iter(data[:6].hex())]*2))[::-1])
+        """Decode the MAC address from a byte array.
+
+        This will take the first 6 bytes from data and transform them into a MAC address
+        string representation. This will be assigned to the attribute "val". It then returns
+        the data stream minus the bytes consumed
+
+            :param data: The data stream containing the value to decode at its head
+            :type data: bytes
+            :returns: The datastream minus the bytes consumed
+            :rtype: bytes
+        """
+        self.val=':'.join("%02x" % x for x in data[:6])
         return data[6:]
 
     def __len__(self):
@@ -66,6 +95,16 @@ class MACAddr:
         print("{}{}".format(PRINT_INDENT*(depth+1),self.val))
 
 class Bool:
+    """Class representing a boolean value.
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the boolean value.
+        :type mac: bool
+        :returns: Bool instance.
+        :rtype: Bool
+
+    """
     def __init__(self,name,val=True):
         self.name=name
         self.val=val
@@ -86,6 +125,16 @@ class Bool:
         print("{}{}".format(PRINT_INDENT*(depth+1),self.val))
 
 class Byte:
+    """Class representing a single byte value.
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the single byte value.
+        :type val: byte
+        :returns: Byte instance.
+        :rtype: Byte
+
+    """
     def __init__(self,name,val=0):
         self.name=name
         self.val=val
@@ -106,6 +155,18 @@ class Byte:
         print("{}{}".format(PRINT_INDENT*(depth+1),":".join(map(lambda b: format(b, "02x"), self.val))))
 
 class EnumByte:
+    """Class representing a single byte value from a limited set of value
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the single byte value.
+        :type val: byte
+        :param loval: the list of possible values.
+        :type loval: dict
+        :returns: EnumByte instance.
+        :rtype: EnumByte
+
+    """
     def __init__(self,name,val=0,loval={0:"Undef"}):
         self.name=name
         self.val=val
@@ -137,6 +198,18 @@ class EnumByte:
             print("{}Undef".format(PRINT_INDENT*(depth+1)))
 
 class BitFieldByte:
+    """Class representing a single byte value as a bit field.
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the single byte value.
+        :type val: byte
+        :param loval: the list defining the name of the property represented by each bit.
+        :type loval: list
+        :returns: BitFieldByte instance.
+        :rtype: BitFieldByte
+
+    """
     def __init__(self,name,val=0,loval=["Undef"]*8):
         self.name=name
         self._val=val
@@ -170,6 +243,16 @@ class BitFieldByte:
             mybit = mybit >>1
 
 class IntByte:
+    """Class representing a single byte as a signed integer.
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the integer value.
+        :type val: int
+        :returns: IntByte instance.
+        :rtype: IntByte
+
+    """
     def __init__(self,name,val=0):
         self.name=name
         self.val=val
@@ -190,6 +273,16 @@ class IntByte:
         print("{}{}".format(PRINT_INDENT*(depth+1),self.val))
 
 class UIntByte:
+    """Class representing a single byte as an unsigned integer.
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the integer value.
+        :type val: int
+        :returns: UIntByte instance.
+        :rtype: UIntByte
+
+    """
     def __init__(self,name,val=0):
         self.name=name
         self.val=val
@@ -210,16 +303,35 @@ class UIntByte:
         print("{}{}".format(PRINT_INDENT*(depth+1),self.val))
 
 class ShortInt:
-    def __init__(self,name,val=0):
+    """Class representing 2 bytes as a signed integer.
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the integer value.
+        :type val: int
+        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+        :type endian: str
+        :returns: ShortInt instance.
+        :rtype: ShortInt
+
+    """
+    def __init__(self,name,val=0,endian="big"):
         self.name=name
         self.val=val
+        self.endian = endian
 
     def encode (self):
-        val=pack(">h",self.val)
+        if self.endian == "big":
+            val=pack(">h",self.val)
+        else:
+            val=pack("<h",self.val)
         return val
 
     def decode(self,data):
-        self.val= unpack(">h",data[:2])[0]
+        if self.endian == "big":
+            self.val= unpack(">h",data[:2])[0]
+        else:
+            self.val= unpack("<h",data[:2])[0]
         return data[2:]
 
     def __len__(self):
@@ -230,16 +342,35 @@ class ShortInt:
         print("{}{}".format(PRINT_INDENT*(depth+1),self.val))
 
 class UShortInt:
-    def __init__(self,name,val=0):
+    """Class representing 2 bytes as an unsigned integer.
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the integer value.
+        :type val: int
+        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+        :type endian: str
+        :returns: UShortInt instance.
+        :rtype: UShortInt
+
+    """
+    def __init__(self,name,val=0,endian="big"):
         self.name=name
         self.val=val
+        self.endian = endian
 
     def encode (self):
-        val=pack(">H",self.val)
+        if self.endian == "big":
+            val=pack(">H",self.val)
+        else:
+            val=pack("<H",self.val)
         return val
 
     def decode(self,data):
-        self.val= unpack(">H",data[:2])[0]
+        if self.endian == "big":
+            self.val= unpack(">H",data[:2])[0]
+        else:
+            self.val= unpack("<H",data[:2])[0]
         return data[2:]
 
     def __len__(self):
@@ -250,16 +381,35 @@ class UShortInt:
         print("{}{}".format(PRINT_INDENT*(depth+1),self.val))
 
 class LongInt:
-    def __init__(self,name,val=0):
+    """Class representing 4 bytes as a signed integer.
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the integer value.
+        :type val: int
+        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+        :type endian: str
+        :returns: LongInt instance.
+        :rtype: LongInt
+
+    """
+    def __init__(self,name,val=0,endian="big"):
         self.name=name
         self.val=val
+        self.endian = endian
 
     def encode (self):
-        val=pack(">l",self.val)
+        if self.endian == "big":
+            val=pack(">l",self.val)
+        else:
+            val=pack("<l",self.val)
         return val
 
     def decode(self,data):
-        self.val= unpack(">l",data[:4])[0]
+        if self.endian == "big":
+            self.val= unpack(">l",data[:4])[0]
+        else:
+            self.val= unpack("<l",data[:4])[0]
         return data[4:]
 
     def __len__(self):
@@ -270,16 +420,35 @@ class LongInt:
         print("{}{}".format(PRINT_INDENT*(depth+1),self.val))
 
 class ULongInt:
-    def __init__(self,name,val=0):
+    """Class representing 4 bytes as an unsigned integer.
+
+        :param name: The name of the instance
+        :type name: str
+        :param val: the integer value.
+        :type val: int
+        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+        :type endian: str
+        :returns: ULongInt instance.
+        :rtype: ULongInt
+
+    """
+    def __init__(self,name,val=0,endian="big"):
         self.name=name
         self.val=val
+        self.endian = endian
 
     def encode (self):
-        val=pack(">L",self.val)
+        if self.endian == "big":
+            val=pack(">L",self.val)
+        else:
+            val=pack("<L",self.val)
         return val
 
     def decode(self,data):
-        self.val= unpack(">L",data[:4])[0]
+        if self.endian == "big":
+            self.val= unpack(">L",data[:4])[0]
+        else:
+            self.val= unpack("<L",data[:4])[0]
         return data[4:]
 
     def __len__(self):
@@ -290,6 +459,18 @@ class ULongInt:
         print("{}{}".format(PRINT_INDENT*(depth+1),self.val))
 
 class OgfOcf:
+    """Class representing the 2 bytes that specify the command in an HCI command packet.
+
+        :param name: The name of the instance
+        :type name: str
+        :param ogf: the Op-code Group (6 bits).
+        :type ogf: bytes
+        :param ocf: the Op-code Command (10 bits).
+        :type ocf: bytes
+        :returns: OgfOcf instance.
+        :rtype: OgfOcf
+
+    """
     def __init__(self,name,ogf=b"\x00",ocf=b"\x00"):
         self.name=name
         self.ogf= ogf
@@ -316,7 +497,14 @@ class OgfOcf:
         print("{}{}".format(PRINT_INDENT*(depth+1),self.ocf))
 
 class Itself:
-    """Idempotent"""
+    """Class representing a byte array that need no manipulation.
+
+        :param name: The name of the instance
+        :type name: str
+        :returns: Itself instance.
+        :rtype: Itself
+
+    """
     def __init__(self,name):
         self.name=name
         self.val=b""
@@ -337,12 +525,21 @@ class Itself:
         print("{}{}".format(PRINT_INDENT*(depth+1),":".join(map(lambda b: format(b, "02x"), self.val))))
 
 class String:
-    """Idempotent"""
+    """Class representing a string.
+
+        :param name: The name of the instance
+        :type name: str
+        :returns: String instance.
+        :rtype: String
+
+    """
     def __init__(self,name):
         self.name=name
         self.val=""
 
     def encode(self):
+        if isinstance(self.val,str):
+            self.val = self.val.encode()
         val=pack(">%ds"%len(self.val),self.val)
         return val
 
@@ -359,7 +556,16 @@ class String:
 
 
 class NBytes:
-    """Idempotent"""
+    """Class representing a byte string.
+
+        :param name: The name of the instance
+        :type name: str
+        :param length: The length
+        :type length: int
+        :returns: NBytes instance.
+        :rtype: NBytes
+
+    """
     def __init__(self,name,length=2):
         self.name=name
         self.length=length
@@ -385,6 +591,16 @@ class NBytes:
         return self.val==b
 
 class NBytes_List:
+    """Class representing a list of bytes string.
+
+        :param name: The name of the instance
+        :type name: str
+        :param bytes: Length of the bytes strings (2, 4 or 16)
+        :type bytes: int
+        :returns: NBytes_List instance.
+        :rtype: NBytes_List
+
+    """
     def __init__(self,name,bytes=2):
         #Bytes should be one of 2, 4 or 16
         self.name=name
@@ -414,7 +630,14 @@ class NBytes_List:
         return False
 
 class Float88:
-    """8.8 fixed point quantity"""
+    """Class representing a 8.8 fixed point quantity.
+
+        :param name: The name of the instance
+        :type name: str
+        :returns: Float88 instance.
+        :rtype: Float88
+
+    """
     def __init__(self,name):
         self.name=name
         self.val=0.0
@@ -457,6 +680,14 @@ class EmptyPayload:
 #
 
 class Packet:
+    """Class representing a generic HCI packet.
+
+        :param header: The packet header.
+        :type header: bytes
+        :returns: Packet instance.
+        :rtype: Packet
+
+    """
     """A generic packet that will be build fromparts"""
     def __init__(self, header="\x00", fmt=">B"):
         self.header = header
@@ -497,6 +728,16 @@ class Packet:
 #
 
 class HCI_Command(Packet):
+    """Class representing a command HCI packet.
+
+        :param ogf: the Op-code Group (6 bits).
+        :type ogf: bytes
+        :param ocf: the Op-code Command (10 bits).
+        :type ocf: bytes
+        :returns: HCI_Command instance.
+        :rtype: HCI_Command
+
+    """
 
     def __init__(self,ogf,ocf):
         super().__init__(HCI_COMMAND)
@@ -517,11 +758,180 @@ class HCI_Command(Packet):
             x.show(depth+1)
 
 class HCI_Cmd_LE_Scan_Enable(HCI_Command):
+    """Class representing a command HCI command to enable/disable BLE scanning.
+
+        :param enable: enable/disable scanning.
+        :type enable: bool
+        :param filter_dups: filter duplicates.
+        :type filter_dups: bool
+        :returns: HCI_Cmd_LE_Scan_Enable instance.
+        :rtype: HCI_Cmd_LE_Scan_Enable
+
+    """
 
     def __init__(self,enable=True,filter_dups=True):
         super(self.__class__, self).__init__(b"\x08",b"\x0c")
         self.payload.append(Bool("enable",enable))
         self.payload.append(Bool("filter",filter_dups))
+
+class HCI_Cmd_LE_Set_Scan_Params(HCI_Command):
+    """Class representing an HCI command to set the scanning parameters.
+
+    This will set a number of parameters related to the scanning functions. For the
+    interval and window, it will always silently enforce the Specs that says it should be >= 2.5 ms
+    and <= 10.24s. It will also silently enforce window <= interval
+
+        :param scan_type: Type of scanning. 0 => Passive (default)
+                                            1 => Active
+        :type scan_type: int
+        :param interval: Time in ms between the start of a scan and the next scan start. Default 10
+        :type interval: int/float
+        :param window: maximum advertising interval in ms. Default 10
+        :type window: int.float
+        :param oaddr_type: Type of own address Value 0 => public (default)
+                                                     1 => Random
+                                                     2 => Private with public fallback
+                                                     3 => Private with random fallback
+        :type oaddr_type: int
+        :param filter: How white list filter is applied. 0 => No filter (Default)
+                                                         1 => sender must be in white list
+                                                         2 => Similar to 0. Some directed advertising may be received.
+                                                         3 => Similar to 1. Some directed advertising may be received.
+        :type filter: int
+        :returns: HCI_Cmd_LE_Scan_Params instance.
+        :rtype: HCI_Cmd_LE_Scan_Params
+
+    """
+
+    def __init__(self,scan_type=0x0,interval=10, window=750, oaddr_type=0,filter=0):
+
+        super(self.__class__, self).__init__(b"\x08",b"\x0b")
+        self.payload.append(EnumByte("scan type",scan_type,
+                                     {0: "Passive",
+                                      1: "Active"}))
+        self.payload.append(UShortInt("Interval",int(round(min(10240,max(2.5,interval))/0.625)),endian="little"))
+        self.payload.append(UShortInt("Window",int(round(min(10240,max(2.5,min(interval,window)))/0.625)),endian="little"))
+        self.payload.append(EnumByte("own addresss type",oaddr_type,
+                                     {0: "Public",
+                                      1: "Random",
+                                      2: "Private IRK or Public",
+                                      3: "Private IRK or Random"}))
+        self.payload.append(EnumByte("filter policy",filter,
+                                     {0: "None",
+                                      1: "Sender In White List",
+                                      2: "Almost None",
+                                      3: "SIWL and some"}))
+
+
+class HCI_Cmd_LE_Advertise(HCI_Command):
+    """Class representing a command HCI command to enable/disable BLE advertising.
+
+        :param enable: enable/disable advertising.
+        :type enable: bool
+        :returns: HCI_Cmd_LE_Scan_Enable instance.
+        :rtype: HCI_Cmd_LE_Scan_Enable
+
+    """
+
+    def __init__(self,enable=True):
+        super(self.__class__, self).__init__(b"\x08",b"\x0a")
+        self.payload.append(Bool("enable",enable))
+
+class HCI_Cmd_LE_Set_Advertised_Msg(HCI_Command):
+    """Class representing an HCI command to set the advertised content.
+
+        :param enable: enable/disable advertising.
+        :type enable: bool
+        :returns: HCI_Cmd_LE_Scan_Enable instance.
+        :rtype: HCI_Cmd_LE_Scan_Enable
+
+    """
+
+    def __init__(self,msg=EmptyPayload()):
+        super(self.__class__, self).__init__(b"\x08",b"\x08")
+        self.payload.append(msg)
+
+class HCI_Cmd_LE_Set_Advertised_Params(HCI_Command):
+    """Class representing an HCI command to set the advertised parameters.
+
+    This will set a number of parameters relted to the advertising functions. For the
+    min and max intervals, it will always silently enforce the Specs that says it should be >= 20ms
+    and <= 10.24s. It will also silently enforce interval_max >= interval_min
+
+        :param interval_min: minimum advertising interval in ms. Default 500
+        :type interval_min: int/float
+        :param interval_max: maximum advertising interval in ms. Default 750
+        :type interval_max: int/float
+        :param adv_type: Type of advertising. Value 0 +> Connectable, Scannable advertising
+                                                    1 => Connectable directed advertising (High duty cycle)
+                                                    2 => Scannable Undirected advertising
+                                                    3 => Non connectable undirected advertising (default)
+        :type adv_type: int
+        :param oaddr_type: Type of own address Value 0 => public (default)
+                                                     1 => Random
+                                                     2 => Private with public fallback
+                                                     3 => Private with random fallback
+        :type oaddr_type: int
+        :param paddr_type: Type of peer address Value 0 => public (default)
+                                                      1 => Random
+        :type paddr_type: int
+        :param peer_addr: Peer MAC address Default 00:00:00:00:00:00
+        :type peer_addr: str
+        :param cmap: Channel map. A bit field dfined as  "Channel 37","Channel 38","Channel 39","RFU","RFU","RFU","RFU","RFU"
+        Default value is 0x7. The value 0x0 is RFU.
+        :type cmap: int
+        :param filter: How white list filter is applied. 0 => No filter (Default)
+                                                         1 => scan are filtered
+                                                         2 => Connection are filtered
+                                                         3 => scan and connection are filtered
+        :type filter: int
+        :returns: HCI_Cmd_LE_Scan_Params instance.
+        :rtype: HCI_Cmd_LE_Scan_Params
+
+    """
+
+    def __init__(self,interval_min=500, interval_max=750,
+                       adv_type=0x3, oaddr_type=0, paddr_type=0,
+                       peer_addr="00:00:00:00:00:00", cmap=0x7, filter=0):
+
+        super(self.__class__, self).__init__(b"\x08",b"\x06")
+        self.payload.append(UShortInt("Adv minimum",int(round(min(10240,max(20,interval_min))/0.625)),endian="little"))
+        self.payload.append(UShortInt("Adv maximum",int(round(min(10240,max(20,max(interval_min,interval_max)))/0.625)),endian="little"))
+        self.payload.append(EnumByte("adv type",adv_type,
+                                        {0: "ADV_IND",
+                                         1: "ADV_DIRECT_IND high",
+                                         2: "ADV_SCAN_IND",
+                                         3: "ADV_NONCONN_IND",
+                                         4: "ADV_DIRECT_IND low"}))
+        self.payload.append(EnumByte("own addresss type",paddr_type,
+                                     {0: "Public",
+                                      1: "Random",
+                                      2: "Private IRK or Public",
+                                      3: "Private IRK or Random"}))
+        self.payload.append(EnumByte("peer addresss type",oaddr_type,
+                                     {0: "Public",
+                                      1: "Random"}))
+        self.payload.append(MACAddr("peer",mac=peer_addr))
+        self.payload.append(BitFieldByte("Channels",cmap,["Channel 37","Channel 38","Channel 39","RFU","RFU","RFU","RFU", "RFU"]))
+
+        self.payload.append(EnumByte("filter policy",filter,
+                                     {0: "None",
+                                      1: "Scan",
+                                      2: "Connection",
+                                      3: "Scan and Connection"}))
+
+class HCI_Cmd_Reset(HCI_Command):
+    """Class representing an HCI command to reset the adapater.
+
+
+        :returns: HCI_Cmd_Reset instance.
+        :rtype: HCI_Cmd_Reset
+
+    """
+
+    def __init__(self):
+        super(self.__class__, self).__init__(b"\x03",b"\x03")
+
 
 ####
 # HCI EVents
@@ -785,218 +1195,6 @@ class Adv_Data(Packet):
             resu+=len(x)
         return resu
 
-#
-# A few convenience functions
-#
-
-def EddyStone(packet):
-    """Check a parsed packet and figure out if it is an Eddystone Beacon.
-    If it is , return the relevant data as a dictionary.
-
-    Return None, it is not an Eddystone Beacon advertising packet"""
-
-    ssu=packet.retrieve("Complete uuids")
-    found=False
-    for x in ssu:
-        if EDDY_UUID in x:
-            found=True
-            break
-    if not found:
-        return None
-
-    found=False
-    adv=packet.retrieve("Advertised Data")
-    for x in adv:
-        luuid=x.retrieve("Service Data uuid")
-        for uuid in luuid:
-            if EDDY_UUID == uuid:
-                found=x
-                break
-        if found:
-            break
-
-
-    if not found:
-        return None
-
-    try:
-        top=found.retrieve("Adv Payload")[0]
-    except:
-        return None
-    #Rebuild that part of the structure
-    found.payload.remove(top)
-    #Now decode
-    result={}
-    data=top.val
-    etype=EnumByte("type",0,{0x00:"Eddystone-UID",0x10:"Eddystone-URL",0x20:"Eddystone-TLM",0x30:"Eddystone-EID"})
-    data=etype.decode(data)
-    found.payload.append(etype)
-    if etype.val== 0x00:
-        power=IntByte("tx_power")
-        data=power.decode(data)
-        found.payload.append(power)
-        result["tx_power"]=power.val
-
-        nspace=Itself("namespace")
-        xx=nspace.decode(data[:10])  #According to https://github.com/google/eddystone/tree/master/eddystone-uid
-        data=data[10:]
-        found.payload.append(nspace)
-        result["name space"]=nspace.val
-
-        nspace=Itself("instance")
-        xx=nspace.decode(data[:6])  #According to https://github.com/google/eddystone/tree/master/eddystone-uid
-        data=data[6:]
-        found.payload.append(nspace)
-        result["instance"]=nspace.val
-
-    elif etype.val== 0x10:
-        power=IntByte("tx_power")
-        data=power.decode(data)
-        found.payload.append(power)
-        result["tx_power"]=power.val
-
-        url=EnumByte("type",0,{0x00:"http://www.",0x01:"https://www.",0x02:"http://",0x03:"https://"})
-        data=url.decode(data)
-        result["url"]=url.strval
-        for x in data:
-            if bytes([x]) == b"\x00":
-                result["url"]+=".com/"
-            elif bytes([x]) == b"\x01":
-                result["url"]+=".org/"
-            elif bytes([x]) == b"\x02":
-                result["url"]+=".edu/"
-            elif bytes([x]) == b"\x03":
-                result["url"]+=".net/"
-            elif bytes([x]) == b"\x04":
-                result["url"]+=".info/"
-            elif bytes([x]) == b"\x05":
-                result["url"]+=".biz/"
-            elif bytes([x]) == b"\x06":
-                result["url"]+=".gov/"
-            elif bytes([x]) == b"\x07":
-                result["url"]+=".com"
-            elif bytes([x]) == b"\x08":
-                result["url"]+=".org"
-            elif bytes([x]) == b"\x09":
-                result["url"]+=".edu"
-            elif bytes([x]) == b"\x10":
-                result["url"]+=".net"
-            elif bytes([x]) == b"\x11":
-                result["url"]+=".info"
-            elif bytes([x]) == b"\x12":
-                result["url"]+=".biz"
-            elif bytes([x]) == b"\x13":
-                result["url"]+=".gov"
-            else:
-                result["url"]+=chr(x) #x.decode("ascii") #Yep ASCII only
-        url=String("url")
-        url.decode(result["url"])
-        found.payload.append(url)
-    elif etype.val== 0x20:
-        myinfo=IntByte("version")
-        data=myinfo.decode(data)
-        found.payload.append(myinfo)
-        myinfo=ShortInt("battery")
-        data=myinfo.decode(data)
-        result["battery"]=myinfo.val
-        found.payload.append(myinfo)
-        myinfo=Float88("temperature")
-        data=myinfo.decode(data)
-        found.payload.append(myinfo)
-        result["temperature"]=myinfo.val
-        myinfo=LongInt("pdu count")
-        data=myinfo.decode(data)
-        found.payload.append(myinfo)
-        result["pdu count"]=myinfo.val
-        myinfo=LongInt("uptime")
-        data=myinfo.decode(data)
-        found.payload.append(myinfo)
-        result["uptime"]=myinfo.val*100 #in msecs
-        return result
-    #elif etype.val== 0x30:
-    else:
-        result["data"]=data
-        xx=Itself("data")
-        xx.decode(data)
-        found.payload.append(xx)
-
-    rssi=packet.retrieve("rssi")
-    if rssi:
-        result["rssi"]=rssi[-1].val
-    mac=packet.retrieve("peer")
-    if mac:
-        result["mac address"]=mac[-1].val
-    return result
-
-##
-# Ruuvi tag stuffs
-def RuuviWeather(packet):
-    #Look for Ruuvi tag URL and decode it
-    result={}
-    url=EddyStone(packet)
-    if url is None:
-        url=packet.retrieve("Payload for mfg_specific_data")
-        if url:
-            val=url[0].val
-            if val[0]==0x99 and val[1]==0x04 and val[2]==0x03:
-                #Looks just right
-                result["mac address"]=packet.retrieve("peer")[0].val
-                val=val[2:]
-                result["humidity"]=val[1]/2.0
-                result["temperature"]=unpack(">b",int(val[2]).to_bytes(1,"big"))[0]
-                result["temperature"]+=val[3]/100.0
-                result["pressure"]=int.from_bytes(val[4:6],"big")+50000
-                dx=int.from_bytes(val[6:8],"big",signed=True)
-                dy=int.from_bytes(val[8:10],"big",signed=True)
-                dz=int.from_bytes(val[10:12],"big",signed=True)
-                length=sqrt(dx**2 + dy**2 + dz**2)
-                result["accelerometer"]=(dx,dy,dz,length)
-                result["voltage"]=int.from_bytes(val[12:14],"big")
-                return result
-
-        else:
-            return None
-    rssi=packet.retrieve("rssi")
-    if rssi:
-        result["rssi"]=rssi[-1].val
-    power=packet.retrieve("tx_power")
-    if power:
-        result["tx_power"]=power[-1].val
-    try:
-        if "//ruu.vi/" in url["url"]:
-            #We got a live one
-            result["mac address"]=packet.retrieve("peer")[0].val
-            url=url["url"].split("//ruu.vi/#")[-1]
-            if len(url)>8:
-                url=url[:-1]
-            val=b64decode(url+ '=' * (4 - len(url) % 4),"#.")
-            if val[0] in [2,4]:
-                result["humidity"]=val[1]/2.0
-                result["temperature"]=unpack(">b",int(val[2]).to_bytes(1,"big"))[0] #Signed int...
-                result["pressure"]=int.from_bytes(val[4:6],"big")+50000
-                if val[0] == 4:
-                    try:
-                        result["id"]=val[6]
-                    except:
-                        pass
-                return result
-            elif val[0] == 3:
-                result["humidity"]=val[1]/2.0
-                result["temperature"]=unpack(">b",int(val[2]).to_bytes(1,"big"))[0]
-                result["temperature"]+=val[3]/100.0
-                result["pressure"]=int.from_bytes(val[4:6],"big")+50000
-                dx=int.from_bytes(val[6:8],"big",signed=True)
-                dy=int.from_bytes(val[8:10],"big",signed=True)
-                dz=int.from_bytes(val[10:12],"big",signed=True)
-                length=sqrt(dx**2 + dy**2 + dz**2)
-                result["accelerometer"]=(dx,dy,dz,length)
-                result["voltage"]=int.from_bytes(val[12:14],"big")
-                return result
-    except:
-        print ("\n\nurl oops....")
-        packet.show()
-    return None
-
 
 
 #
@@ -1050,10 +1248,11 @@ class BLEScanRequester(asyncio.Protocol):
 
     def connection_made(self, transport):
         self.transport = transport
+        command=HCI_Cmd_LE_Set_Scan_Params()
+        self.transport.write(command.encode())
 
     def connection_lost(self, exc):
         super().connection_lost(exc)
-
 
     def send_scan_request(self):
         '''Sending LE scan request'''
@@ -1065,12 +1264,12 @@ class BLEScanRequester(asyncio.Protocol):
         command=HCI_Cmd_LE_Scan_Enable(False,False)
         self.transport.write(command.encode())
 
+    def send_command(self,command):
+        '''Sending an arbitrary command'''
+        self.transport.write(command.encode())
+
     def data_received(self, packet):
         self.process(packet)
 
     def default_process(self,data):
         pass
-
-
-
-
