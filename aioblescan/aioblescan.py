@@ -84,7 +84,7 @@ class MACAddr:
             :returns: The datastream minus the bytes consumed
             :rtype: bytes
         """
-        self.val=':'.join("%02x" % x for x in data[:6])
+        self.val=':'.join("%02x" % x for x in reversed(data[:6]))
         return data[6:]
 
     def __len__(self):
