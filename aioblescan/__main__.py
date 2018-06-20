@@ -97,7 +97,10 @@ event_loop = asyncio.get_event_loop()
 mysocket = aiobs.create_bt_socket(mydev)
 
 #create a connection with the raw socket
-fac=event_loop.create_connection(aiobs.BLEScanRequester,sock=mysocket)
+#This used to work but now requires a STREAM socket.
+#fac=event_loop.create_connection(aiobs.BLEScanRequester,sock=mysocket)
+#Thanks to martensjacobs for this fix
+fac=event_loop._create_connection_transport(mysocket,aiobs.BLEScanRequester,None,None)
 #Start it
 conn,btctrl = event_loop.run_until_complete(fac)
 #Attach your processing
