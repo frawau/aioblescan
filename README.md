@@ -139,13 +139,13 @@ Why not use scapy?
         test.send(hdr / chdr / command)
 
     to get things going. But... the great thing with Scapy is that there is so
-    many versions to choose from.... and not all have all the same fuctions ... and
+    many versions to choose from.... and not all have all the same functions ... and
     installation can be haphazard, with some version not installing at all. Also
     scapy inludes a lot of other protocols and could be an overkill... lastly it
     is never too late to learn...
 
 What can you track?
 
-    aioblescan will try to parse all the incoming advertized information. You can see
+    aioblescan will try to parse all the incoming advertised information. You can see
     the raw data when it does not know what to do. With Eddystone beacon you can see the
     URL, Telemetry and UID
