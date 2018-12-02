@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 from distutils.core import setup
 
-version="0.2.1"
+version="0.2.2"
 
 setup(name='aioblescan',
     packages=['aioblescan', 'aioblescan.plugins'],
