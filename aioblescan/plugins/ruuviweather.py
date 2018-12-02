@@ -31,11 +31,11 @@ from aioblescan.plugins import EddyStone
 # A few convenience functions
 #
 
-# Get sign using first bit and return value with sign
-def s8(value):
-    if (value >> 7) & 1:
-        return -(value & ~(1 << 7))
-    return (value & ~(1 << 7))
+# Get sign using first bit and return value with sign + fraction
+def get_temp(int, frac):
+    if (int >> 7) & 1:
+        return -(int & ~(1 << 7)) - frac/100.0
+    return (int & ~(1 << 7)) + frac/100.0
 
 # Ruuvi tag stuffs
 
@@ -69,8 +69,7 @@ class RuuviWeather(object):
                     result["mac address"]=packet.retrieve("peer")[0].val
                     val=val[2:]
                     result["humidity"]=val[1]/2.0
-                    result["temperature"]=s8(val[2])
-                    result["temperature"]+=val[3]/100.0
+                    result["temperature"]=get_temp(val[2], val[3])
                     result["pressure"]=int.from_bytes(val[4:6],"big")+50000
                     dx=int.from_bytes(val[6:8],"big",signed=True)
                     dy=int.from_bytes(val[8:10],"big",signed=True)
