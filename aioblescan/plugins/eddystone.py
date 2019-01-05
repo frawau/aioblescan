@@ -114,22 +114,21 @@ class EddyStone(object):
                                            url_schemes.index((myurl.scheme,myhostname.startswith("www.")))))
             if myhostname.startswith("www."):
                 myhostname = myhostname[4:]
-
         extval=None
         if myhostname.split(".")[-1] in url_domain:
             extval = url_domain.index(myhostname.split(".")[-1])
             myhostname = ".".join(myhostname.split(".")[:-1])
-        if extval and not mypath.startswith("/"):
+        if extval is not None and not mypath.startswith("/"):
             extval+=7
         else:
             if myurl.port is None:
-                if extval:
+                if extval is not None:
                     mypath = mypath[1:]
             else:
                 extval += 7
         encodedurl.append(aios.String("URL string"))
         encodedurl[-1].val = myhostname
-        if extval:
+        if extval is not None:
             encodedurl.append(aios.IntByte("URL Extention",extval))
 
         if myurl.port:
