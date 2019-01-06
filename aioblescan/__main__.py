@@ -51,6 +51,8 @@ parser.add_argument("-a","--advertise", type= int, default=0,
                     help="Broadcast like an EddyStone Beacon. Set the interval between packet in millisec")
 parser.add_argument("-u","--url", type= str, default="",
                     help="When broadcasting like an EddyStone Beacon, set the url.")
+parser.add_argument("-t","--txpower", type= int, default=0,
+                    help="When broadcasting like an EddyStone Beacon, set the Tx power")
 parser.add_argument("-D","--device", type=int, default=0,
                     help="Select the hciX device to use (default 0, i.e. hci0).")
 try:
@@ -113,9 +115,12 @@ if opts.advertise:
     command = aiobs.HCI_Cmd_LE_Set_Advertised_Params(interval_min=opts.advertise,interval_max=opts.advertise)
     btctrl.send_command(command)
     if opts.url:
-        command = aiobs.HCI_Cmd_LE_Set_Advertised_Msg(msg=EddyStone(param=opts.url))
+        myeddy = EddyStone(param=opts.url)
     else:
-        command = aiobs.HCI_Cmd_LE_Set_Advertised_Msg(msg=EddyStone())
+        myeddy = EddyStone()
+    if opts.txpower:
+        myeddy.power=opts.txpower
+    command = aiobs.HCI_Cmd_LE_Set_Advertised_Msg(msg=myeddy)
     btctrl.send_command(command)
     command = aiobs.HCI_Cmd_LE_Advertise(enable=True)
     btctrl.send_command(command)
