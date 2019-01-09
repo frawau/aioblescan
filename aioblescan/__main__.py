@@ -96,16 +96,10 @@ def my_process(data):
     else:
         ev.show(0)
 
-try:
-    mydev=int(sys.argv[1])
-except:
-    mydev=0
-
-
 event_loop = asyncio.get_event_loop()
 
 #First create and configure a raw socket
-mysocket = aiobs.create_bt_socket(mydev)
+mysocket = aiobs.create_bt_socket(opts.device)
 
 #create a connection with the raw socket
 #This used to work but now requires a STREAM socket.
