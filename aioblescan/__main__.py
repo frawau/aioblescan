@@ -30,6 +30,7 @@ from aioblescan.plugins import EddyStone
 from aioblescan.plugins import RuuviWeather
 from aioblescan.plugins import ATCMiThermometer
 from aioblescan.plugins import ThermoBeacon
+from aioblescan.plugins import Tilt
 
 # global
 opts = None
@@ -85,6 +86,12 @@ def my_process(data):
         xx = ThermoBeacon().decode(ev)
         if xx:
             print("Temperature info {}".format(xx))
+            return
+    if opts.tilt:
+        noopt = False
+        xx = Tilt().decode(ev)
+        if xx:
+            print("{}".format(xx))
             return
     if noopt:
         ev.show(0)
@@ -163,6 +170,12 @@ def main(args=None):
         type=int,
         default=0,
         help="Select the hciX device to use (default 0, i.e. hci0).",
+    )
+    parser.add_argument(
+        "--tilt",
+        action='store_true',
+        default=False,
+        help="Look only for Tilt.",
     )
     try:
         opts = parser.parse_args()
