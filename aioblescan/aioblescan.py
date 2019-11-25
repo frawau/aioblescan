@@ -1002,6 +1002,10 @@ class HCI_LE_Meta_Event(Packet):
             ev=RepeatedField("Reports", HCI_LEM_Adv_Report)
             data=ev.decode(data)
             self.payload.append(ev)
+        elif code.val==b"\x0d":
+            ev=RepeatedField("Ext Adv Report", HCI_LEM_Ext_Adv_Report)
+            data=ev.decode(data)
+            self.payload.append(ev)
         else:
             ev=Itself("Payload")
             data=ev.decode(data)
@@ -1086,6 +1090,43 @@ class HCI_LEM_Adv_Report(Packet):
         for x in self.payload:
             x.show(depth+1)
 
+
+class HCI_LEM_Ext_Adv_Report(Packet):
+    def __init__(self):
+        self.name="Ext Adv Report"
+        self.payload=[BitFieldByte("ev type",0,["Connectable", "Scannable", "Directed", "Scan Response", "Legacy", "Incomplete/more", "Incomplete/truncated", "RFU"]),
+                      UIntByte("unused"),
+                      EnumByte("addr type",0,{0:"public device", 1:"random device", 2:"public identity", 3:"random identity", 0xFF:"anonymous"}),
+                      MACAddr("peer"),
+                      EnumByte("primary phy",1,{1:"LE 1M", 3:"LE Coded"}),
+                      EnumByte("secondary phy",0,{0:"N/A", 1:"LE 1M", 2:"LE 2M", 3:"LE Coded"}),
+                      EnumByte("adv sid",255,{0:"0x00", 1:"0x01", 2:"0x02", 3:"0x03", 4:"0x04", 5:"0x05", 6:"0x06", 7:"0x07", 8:"0x08", 9:"0x09", 10:"0x0A", 11:"0x0B", 12:"0x0C", 13:"0x0D", 14:"0x0E", 15:"0x0F", 0xFF:"N/A"}),
+                      IntByte("tx power"),
+                      IntByte("rssi"),
+                      UShortInt("adv interval", endian="little"),
+                      EnumByte("direct addr type",0,{0:"public device", 1:"random device", 2:"public identity", 3:"random identity", 0xFE:"random device"}),
+                      MACAddr("direct addr"),
+                      UIntByte("data len")]
+
+
+    def decode(self,data):
+
+        for x in self.payload:
+            data=x.decode(data)
+
+        datalength = self.payload[-1].val
+        while datalength > 0:
+            ad=AD_Structure()
+            data=ad.decode(data)
+            self.payload.append(ad)
+
+            datalength -= len(ad)
+
+    def show(self,depth=0):
+        print("{}{}:".format(PRINT_INDENT*depth,self.name))
+        for x in self.payload:
+            x.show(depth+1)
+
 class EIR_Hdr(Packet):
     def __init__(self):
         self.type= EnumByte("type", 0, {
@@ -1126,8 +1167,8 @@ class EIR_Hdr(Packet):
     def decode(self,data):
         return self.type.decode(data)
 
-    def show(self):
-        return self.type.show()
+    def show(self,depth=0):
+        return self.type.show(depth)
 
     @property
     def val(self):
