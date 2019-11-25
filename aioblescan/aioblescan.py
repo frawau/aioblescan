@@ -1041,13 +1041,10 @@ class RepeatedField:
     def decode(self, data):
         self.records = []
         data = self.length_field.decode(data)
-        print ("length = %d" % self.length_field.val)
-        print ("data = (%d) %r" % (len(data), data))
         for x in range(self.length_field.val):
             record = self.subfield_cls()
             data = record.decode(data)
             self.records.append(record)
-            record.show()
 
         return data
 
@@ -1073,7 +1070,6 @@ class HCI_LEM_Adv_Report(Packet):
         datalength = self.payload[-1].val
 
         while datalength > 0:
-            print("datalength = %d" % datalength)
             length=UIntByte("sublen")
             data=length.decode(data)
             code=EIR_Hdr()
