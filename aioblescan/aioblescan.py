@@ -999,7 +999,7 @@ class HCI_LE_Meta_Event(Packet):
             data=x.decode(data)
         code=self.payload[0]
         if code.val==b"\x02":
-            ev=RepeatedField("Adv Report", HCI_LEM_Adv_Report)
+            ev=RepeatedField("Reports", HCI_LEM_Adv_Report)
             data=ev.decode(data)
             self.payload.append(ev)
         else:
