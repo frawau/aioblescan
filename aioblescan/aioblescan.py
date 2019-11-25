@@ -1030,28 +1030,27 @@ class ManufacturerSpecificData(Packet):
             x.show(depth+1)
 
 
-class RepeatedField:
+class RepeatedField(Packet):
     def __init__(self, name, subfield_cls, length_field_cls=UIntByte):
         self.name = name
         self.subfield_cls = subfield_cls
         self.length_field = length_field_cls("count of " + name)
-        self.records = []
-    
-    
+        self.payload = []
+
     def decode(self, data):
-        self.records = []
+        self.payload = []
         data = self.length_field.decode(data)
         for x in range(self.length_field.val):
-            record = self.subfield_cls()
-            data = record.decode(data)
-            self.records.append(record)
+            field = self.subfield_cls()
+            data = field.decode(data)
+            self.payload.append(field)
 
         return data
 
     def show(self, depth=0):
         print("{}{}: {}".format(PRINT_INDENT*depth, self.name, self.length_field.val))
-        for record in self.records:
-            record.show(depth+1)
+        for field in self.payload:
+            field.show(depth+1)
 
 
 class HCI_LEM_Adv_Report(Packet):
