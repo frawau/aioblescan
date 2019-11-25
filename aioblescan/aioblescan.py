@@ -571,10 +571,11 @@ class NBytes:
         self.val=b""
 
     def encode(self):
-        return self.val[:self.length].ljust(self.length, b'\0')
+        val=pack(">%ds"%len(self.length),self.val)
+        return val
 
-    def decode(self, data):
-        self.val = data[:self.length]
+    def decode(self,data):
+        self.val=unpack(">%ds"%self.length,data[:self.length])[0][::-1]
         return data[self.length:]
 
     def __len__(self):
