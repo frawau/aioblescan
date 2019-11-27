@@ -571,10 +571,11 @@ class NBytes:
         self.val=b""
 
     def encode(self):
-        return self.val[:self.length].ljust(self.length, b'\0')
+        val=pack(">%ds"%len(self.length),self.val)
+        return val
 
-    def decode(self, data):
-        self.val = data[:self.length]
+    def decode(self,data):
+        self.val=unpack(">%ds"%self.length,data[:self.length])[0][::-1]
         return data[self.length:]
 
     def __len__(self):
@@ -998,7 +999,7 @@ class HCI_LE_Meta_Event(Packet):
             data=x.decode(data)
         code=self.payload[0]
         if code.val==b"\x02":
-            ev=RepeatedField("Adv Report", HCI_LEM_Adv_Report)
+            ev=RepeatedField("Reports", HCI_LEM_Adv_Report)
             data=ev.decode(data)
             self.payload.append(ev)
         else:
@@ -1029,31 +1030,27 @@ class ManufacturerSpecificData(Packet):
             x.show(depth+1)
 
 
-class RepeatedField:
+class RepeatedField(Packet):
     def __init__(self, name, subfield_cls, length_field_cls=UIntByte):
         self.name = name
         self.subfield_cls = subfield_cls
         self.length_field = length_field_cls("count of " + name)
-        self.records = []
-    
-    
+        self.payload = []
+
     def decode(self, data):
-        self.records = []
+        self.payload = []
         data = self.length_field.decode(data)
-        print ("length = %d" % self.length_field.val)
-        print ("data = (%d) %r" % (len(data), data))
         for x in range(self.length_field.val):
-            record = self.subfield_cls()
-            data = record.decode(data)
-            self.records.append(record)
-            record.show()
+            field = self.subfield_cls()
+            data = field.decode(data)
+            self.payload.append(field)
 
         return data
 
     def show(self, depth=0):
         print("{}{}: {}".format(PRINT_INDENT*depth, self.name, self.length_field.val))
-        for record in self.records:
-            record.show(depth+1)
+        for field in self.payload:
+            field.show(depth+1)
 
 
 class HCI_LEM_Adv_Report(Packet):
@@ -1072,7 +1069,6 @@ class HCI_LEM_Adv_Report(Packet):
         datalength = self.payload[-1].val
 
         while datalength > 0:
-            print("datalength = %d" % datalength)
             length=UIntByte("sublen")
             data=length.decode(data)
             code=EIR_Hdr()
