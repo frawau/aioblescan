@@ -64,21 +64,40 @@ class RuuviWeather(object):
             url=packet.retrieve("Payload for mfg_specific_data")
             if url:
                 val=url[0].val
-                if val[0]==0x99 and val[1]==0x04 and val[2]==0x03:
-                    #Looks just right
-                    result["mac address"]=packet.retrieve("peer")[0].val
-                    val=val[2:]
-                    result["humidity"]=val[1]/2.0
-                    result["temperature"]=get_temp(val[2], val[3])
-                    result["pressure"]=int.from_bytes(val[4:6],"big")+50000
-                    dx=int.from_bytes(val[6:8],"big",signed=True)
-                    dy=int.from_bytes(val[8:10],"big",signed=True)
-                    dz=int.from_bytes(val[10:12],"big",signed=True)
-                    length=sqrt(dx**2 + dy**2 + dz**2)
-                    result["accelerometer"]=(dx,dy,dz,length)
-                    result["voltage"]=int.from_bytes(val[12:14],"big")
-                    return result
-
+                if val[0]==0x99 and val[1]==0x04:
+                    if val[2]==0x03:
+                        #Looks just right RAWv1
+                        result["mac address"]=packet.retrieve("peer")[0].val
+                        val=val[2:]
+                        result["humidity"]=val[1]/2.0
+                        result["temperature"]=get_temp(val[2], val[3])
+                        result["pressure"]=int.from_bytes(val[4:6],"big")+50000
+                        dx=int.from_bytes(val[6:8],"big",signed=True)
+                        dy=int.from_bytes(val[8:10],"big",signed=True)
+                        dz=int.from_bytes(val[10:12],"big",signed=True)
+                        length=sqrt(dx**2 + dy**2 + dz**2)
+                        result["accelerometer"]=(dx,dy,dz,length)
+                        result["voltage"]=int.from_bytes(val[12:14],"big")
+                        return result
+                    elif val[2]==0x05:
+                        result["mac address"] = packet.retrieve("peer")[0].val
+                        val=val[2:]
+                        result["temperature"] = int.from_bytes(val[1:3],"big",signed=True)*0.005
+                        result["humidity"] = int.from_bytes(val[3:5],"big")*0.0025
+                        result["pressure"] = (int.from_bytes(val[5:7],"big") + 50000)/100.0
+                        dx = int.from_bytes(val[7:9],"big",signed=True)
+                        dy = int.from_bytes(val[9:11],"big",signed=True)
+                        dz = int.from_bytes(val[11:13],"big",signed=True)
+                        length = sqrt(dx**2 + dy**2 + dz**2)
+                        result["accelerometer"] = (dx,dy,dz,length)
+                        result["voltage"] = ((int.from_bytes(val[13:15],"big") >> 5) + 1600) / 1000
+                        result["tx_power"] = (int.from_bytes(val[13:15],"big") & 0x1f) *2 - 40
+                        result["move count"] = int.from_bytes(val[15],"big")
+                        result["sequence"] = int.from_bytes(val[16:18],"big")
+                        return result
+                    else:
+                        packet.show()
+                        return None
             else:
                 return None
         power=packet.retrieve("tx_power")
@@ -115,6 +134,7 @@ class RuuviWeather(object):
                     result["voltage"]=int.from_bytes(val[12:14],"big")
                     return result
         except:
-            print ("\n\nurl oops....")
-            packet.show()
+            pass
+            #print ("\n\nurl oops....")
+            #packet.show()
         return None
