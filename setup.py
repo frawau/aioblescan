@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-from distutils.core import setup
+import setuptools
+version="0.2.5"
 
-version="0.2.4"
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
-setup(name='aioblescan',
-    packages=['aioblescan', 'aioblescan.plugins'],
+setuptools.setup(name='aioblescan',
+    packages=['aioblescan','aioblescan.plugins'],
+    #packages=setuptools.find_packages(),
     version=version,
     author='François Wautier',
     author_email='francois@wautier.eu',
     description='Scanning Bluetooth for advertised info with asyncio.',
+    long_description=long_description,
     url='http://github.com/frawau/aioblescan',
-    download_url='https://github.com/frawau/aioblescan/archive/'+version+'.tar.gz',
     keywords = ['bluetooth', 'advertising', 'hci', 'ble'],
     license='MIT',
     install_requires=[],
@@ -24,5 +27,7 @@ setup(name='aioblescan',
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6'
-    ])
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7'
+    ],
+    zip_safe=False)

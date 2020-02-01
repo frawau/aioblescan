@@ -113,7 +113,7 @@ class Bool:
         return b'\x01' if self.val else b'\x00'
 
     def decode(self,data):
-        self.val = (data[:1] == b"\x01")
+        self.val = data[:1] == b"\x01"
         return data[1:]
 
     def __len__(self):
@@ -571,8 +571,7 @@ class NBytes:
         self.val=b""
 
     def encode(self):
-        val=pack(">%ds"%len(self.length),self.val)
-        return val
+        return pack(">%ds"%len(self.length),self.val)
 
     def decode(self,data):
         self.val=unpack(">%ds"%self.length,data[:self.length])[0][::-1]
@@ -674,6 +673,7 @@ class EmptyPayload:
     def show(self,depth=0):
         return
 
+
 #
 # Bluetooth starts here
 #
@@ -756,6 +756,29 @@ class HCI_Command(Packet):
         for x in self.payload:
             x.show(depth+1)
 
+
+class RepeatedField(Packet):
+    def __init__(self, name, subfield_cls, length_field_cls=UIntByte):
+        self.name = name
+        self.subfield_cls = subfield_cls
+        self.length_field = length_field_cls("count of " + name)
+        self.payload = []
+
+    def decode(self, data):
+        self.payload = []
+        data = self.length_field.decode(data)
+        for x in range(self.length_field.val):
+            field = self.subfield_cls()
+            data = field.decode(data)
+            self.payload.append(field)
+
+        return data
+
+    def show(self, depth=0):
+        print("{}{}: {}".format(PRINT_INDENT*depth, self.name, self.length_field.val))
+        for field in self.payload:
+            field.show(depth+1)
+
 class HCI_Cmd_LE_Scan_Enable(HCI_Command):
     """Class representing a command HCI command to enable/disable BLE scanning.
 
@@ -768,7 +791,7 @@ class HCI_Cmd_LE_Scan_Enable(HCI_Command):
 
     """
 
-    def __init__(self,enable=True,filter_dups=False):
+    def __init__(self,enable=True,filter_dups=True):
         super(self.__class__, self).__init__(b"\x08",b"\x0c")
         self.payload.append(Bool("enable",enable))
         self.payload.append(Bool("filter",filter_dups))
@@ -802,7 +825,7 @@ class HCI_Cmd_LE_Set_Scan_Params(HCI_Command):
 
     """
 
-    def __init__(self,scan_type=0x1,interval=10, window=750, oaddr_type=0,filter=0):
+    def __init__(self,scan_type=0x0,interval=10, window=750, oaddr_type=0,filter=0):
 
         super(self.__class__, self).__init__(b"\x08",b"\x0b")
         self.payload.append(EnumByte("scan type",scan_type,
@@ -996,65 +1019,23 @@ class HCI_LE_Meta_Event(Packet):
 
     def decode(self,data):
         for x in self.payload:
-            data=x.decode(data)
-        code=self.payload[0]
-        if code.val==b"\x02":
-            ev=RepeatedField("Reports", HCI_LEM_Adv_Report)
-            data=ev.decode(data)
-            self.payload.append(ev)
-        elif code.val==b"\x0d":
-            ev=RepeatedField("Ext Adv Report", HCI_LEM_Ext_Adv_Report)
-            data=ev.decode(data)
-            self.payload.append(ev)
+            data = x.decode(data)
+        code = self.payload[0]
+        if code.val == b"\x02":
+            ev = RepeatedField("Adv Report",HCI_LEM_Adv_Report)
+        elif code.val == b"\x0d":
+            ev = RepeatedField("Ext Adv Report",HCI_LEM_Ext_Adv_Report)
         else:
-            ev=Itself("Payload")
-            data=ev.decode(data)
-            self.payload.append(ev)
+            ev = Itself("Payload")
+
+        data = ev.decode(data)
+        self.payload.append(ev)
         return data
 
     def show(self,depth=0):
         print("{}{}:".format(PRINT_INDENT*depth,self.name))
         for x in self.payload:
             x.show(depth+1)
-
-class ManufacturerSpecificData(Packet):
-    def __init__(self, name="Manufacturer Specific Data"):
-        self.name = name
-        self.payload = [UShortInt("Manufacturer ID", endian="little"), Itself("Payload")]
-
-    def decode(self, data):
-        # Warning: Will consume all the data you give it!
-        for p in self.payload:
-            data = p.decode(data)
-        return data
-
-    def show(self, depth=0):
-        print("{}{}:".format(PRINT_INDENT*depth,self.name))
-        for x in self.payload:
-            x.show(depth+1)
-
-
-class RepeatedField(Packet):
-    def __init__(self, name, subfield_cls, length_field_cls=UIntByte):
-        self.name = name
-        self.subfield_cls = subfield_cls
-        self.length_field = length_field_cls("count of " + name)
-        self.payload = []
-
-    def decode(self, data):
-        self.payload = []
-        data = self.length_field.decode(data)
-        for x in range(self.length_field.val):
-            field = self.subfield_cls()
-            data = field.decode(data)
-            self.payload.append(field)
-
-        return data
-
-    def show(self, depth=0):
-        print("{}{}: {}".format(PRINT_INDENT*depth, self.name, self.length_field.val))
-        for field in self.payload:
-            field.show(depth+1)
 
 
 class HCI_LEM_Adv_Report(Packet):
@@ -1070,14 +1051,10 @@ class HCI_LEM_Adv_Report(Packet):
         for x in self.payload:
             data=x.decode(data)
         #Now we have a sequence of len, type data with possibly a RSSI byte at the end
-        datalength = self.payload[-1].val
-
-        while datalength > 0:
+        while len(data) > 1:
             ad=AD_Structure()
             data=ad.decode(data)
             self.payload.append(ad)
-
-            datalength -= len(ad)
 
         if data:
             myinfo=IntByte("rssi")
@@ -1089,7 +1066,6 @@ class HCI_LEM_Adv_Report(Packet):
         print("{}{}:".format(PRINT_INDENT*depth,self.name))
         for x in self.payload:
             x.show(depth+1)
-
 
 class HCI_LEM_Ext_Adv_Report(Packet):
     def __init__(self):
@@ -1167,7 +1143,7 @@ class EIR_Hdr(Packet):
     def decode(self,data):
         return self.type.decode(data)
 
-    def show(self,depth=0):
+    def show(self, depth=0):
         return self.type.show(depth)
 
     @property
@@ -1278,6 +1254,21 @@ class AD_Structure(Packet):
         for x in self.payload:
             x.show(depth+1)
 
+class ManufacturerSpecificData(Packet):
+    def __init__(self, name="Manufacturer Specific Data"):
+        self.name = name
+        self.payload = [UShortInt("Manufacturer ID", endian="little"), Itself("Payload")]
+
+    def decode(self, data):
+        # Warning: Will consume all the data you give it!
+        for p in self.payload:
+            data = p.decode(data)
+        return data
+
+    def show(self, depth=0):
+        print("{}{}:".format(PRINT_INDENT*depth,self.name))
+        for x in self.payload:
+            x.show(depth+1)
 #
 # The defs are over. Now the realstuffs
 #
