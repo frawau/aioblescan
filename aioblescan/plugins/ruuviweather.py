@@ -67,7 +67,7 @@ class RuuviWeather(object):
                 if val[0].val == 0x0499:
                     val = val[1].val
                     if val[0]==0x03:
-                        print("RAWv1")
+                        #print("RAWv1")
                         #Looks just right RAWv1
                         result["mac address"]=packet.retrieve("peer")[0].val
                         result["humidity"]=val[1]/2.0
@@ -81,7 +81,7 @@ class RuuviWeather(object):
                         result["voltage"]=int.from_bytes(val[12:14],"big")
                         return result
                     elif val[0]==0x05:
-                        print("RAWv2")
+                        #print("RAWv2")
                         result["mac address"] = packet.retrieve("peer")[0].val
                         result["temperature"] = int.from_bytes(val[1:3],"big",signed=True)*0.005
                         result["humidity"] = int.from_bytes(val[3:5],"big")*0.0025
@@ -103,7 +103,7 @@ class RuuviWeather(object):
                 #print("No data")
                 return None
         else:
-            print("URL")
+            #print("URL")
             power=packet.retrieve("tx_power")
             if power:
                 result["tx_power"]=power[-1].val
