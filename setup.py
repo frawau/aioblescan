@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 import setuptools
-version="0.2.5"
+version="0.2.6"
 
-with open("README.md", "r") as fh:
+with open("README.rst", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(name='aioblescan',
@@ -14,7 +14,7 @@ setuptools.setup(name='aioblescan',
     author_email='francois@wautier.eu',
     description='Scanning Bluetooth for advertised info with asyncio.',
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type='text/x-rst',
     url='http://github.com/frawau/aioblescan',
     keywords = ['bluetooth', 'advertising', 'hci', 'ble'],
     license='MIT',
