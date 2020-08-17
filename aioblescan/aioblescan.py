@@ -134,7 +134,7 @@ class Byte:
         :rtype: Byte
 
     """
-    def __init__(self,name,val=0):
+    def __init__(self,name,val=b'\0'):
         self.name=name
         self.val=val
 
