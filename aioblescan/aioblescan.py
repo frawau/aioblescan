@@ -25,7 +25,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 # IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 
-import socket, asyncio
+import socket, platform, asyncio
 from struct import pack, unpack, calcsize
 
 
@@ -1273,7 +1273,7 @@ class ManufacturerSpecificData(Packet):
 # The defs are over. Now the realstuffs
 #
 
-def create_bt_socket(interface=0):
+def create_bt_socket(interface=None):
     exceptions = []
     sock = None
     try:
@@ -1281,15 +1281,39 @@ def create_bt_socket(interface=0):
                              type=socket.SOCK_RAW,
                              proto=socket.BTPROTO_HCI)
         sock.setblocking(False)
-        sock.setsockopt(socket.SOL_HCI, socket.HCI_FILTER, pack("IIIh2x", 0xffffffff,0xffffffff,0xffffffff,0)) #type mask, event mask, event mask, opcode
-        try:
-            sock.bind((interface,))
-        except OSError as exc:
-            exc = OSError(
-                    exc.errno, 'error while attempting to bind on '
-                    'interface {!r}: {}'.format(
-                        interface, exc.strerror))
-            exceptions.append(exc)
+        if platform.system() == "Linux":
+            sock.setsockopt(socket.SOL_HCI, socket.HCI_FILTER, pack("IIIh2x", 0xffffffff,0xffffffff,0xffffffff,0)) #type mask, event mask, event mask, opcode
+            if not interface:
+                interface = 0
+            try:
+                sock.bind((interface,))
+            except OSError as exc:
+                exc = OSError(
+                        exc.errno, 'error while attempting to bind on '
+                        'interface {!r}: {}'.format(
+                            interface, exc.strerror))
+                exceptions.append(exc)
+        elif platform.system() == "FreeBSD":
+            import ctypes, ctypes.util
+            sock.setsockopt(socket.SOL_HCI, socket.HCI_FILTER, pack("IQ", 0x00000000, 0x2000000000000000)) # type mask, event mask
+            if not interface:
+                interface = 'ubt0'
+            libc = ctypes.CDLL(ctypes.util.find_library('c'), use_errno=True)
+            # bind/connect via libc is required due to https://bugs.python.org/issue41130
+            class SockaddrHci(ctypes.Structure):
+                _fields_ = [
+                    ('hci_len', ctypes.c_char),
+                    ('hci_family', ctypes.c_char),
+                    ('hci_node', ctypes.c_char * 32),
+                ]
+            adr = SockaddrHci(ctypes.sizeof(SockaddrHci), socket.AF_BLUETOOTH,
+                (interface + 'hci').ljust(32, '\0').encode('utf-8'))
+            if libc.bind(sock.fileno(), ctypes.pointer(adr), ctypes.sizeof(SockaddrHci)) != 0:
+                raise OSError(ctypes.get_errno(), 'bind')
+            if libc.connect(sock.fileno(), ctypes.pointer(adr), ctypes.sizeof(SockaddrHci)) != 0:
+                raise OSError(ctypes.get_errno(), 'connect')
+        else:
+            raise OSError('Platform not supported')
     except OSError as exc:
         if sock is not None:
             sock.close()
