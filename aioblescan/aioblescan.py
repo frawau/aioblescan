@@ -820,8 +820,8 @@ class HCI_Cmd_LE_Set_Scan_Params(HCI_Command):
                                                          2 => Similar to 0. Some directed advertising may be received.
                                                          3 => Similar to 1. Some directed advertising may be received.
         :type filter: int
-        :returns: HCI_Cmd_LE_Scan_Params instance.
-        :rtype: HCI_Cmd_LE_Scan_Params
+        :returns: HCI_Cmd_LE_Set_Scan_Params instance.
+        :rtype: HCI_Cmd_LE_Set_Scan_Params
 
     """
 
