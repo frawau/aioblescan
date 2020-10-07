@@ -1415,6 +1415,12 @@ class BLEScanRequester(asyncio.Protocol):
         self.sip = None
         self.process = self.default_process
 
+    def _use_ext_scan(self):
+        # Bluetooth Core Specification Vol 2, Part E, Section 6.27
+        # Use LE extended scan if HCI_Cmd_LE_Set_Extended_Scan_Enable/Params are
+        # supported.
+        return (self._supported_commands[37] & 0x60) == 0x60
+
     def connection_made(self, transport):
         self.transport = transport
 
@@ -1428,17 +1434,28 @@ class BLEScanRequester(asyncio.Protocol):
         '''Sending LE scan request'''
         await self._initialized.wait()
 
-        command=HCI_Cmd_LE_Set_Scan_Params()
-        self._send_command_no_wait(command)
+        if self._use_ext_scan():
+            command=HCI_Cmd_LE_Set_Extended_Scan_Params()
+            self._send_command_no_wait(command)
 
-        command=HCI_Cmd_LE_Scan_Enable(True,False)
-        return self._send_command_no_wait(command)
+            command=HCI_Cmd_LE_Set_Extended_Scan_Enable(True,1)
+            return self._send_command_no_wait(command)
+        else:
+            command=HCI_Cmd_LE_Set_Scan_Params()
+            self._send_command_no_wait(command)
+
+            command=HCI_Cmd_LE_Scan_Enable(True,False)
+            return self._send_command_no_wait(command)
 
     async def stop_scan_request(self):
         '''Sending LE scan request'''
         await self._initialized.wait()
 
-        command=HCI_Cmd_LE_Scan_Enable(False,False)
+        if self._use_ext_scan():
+            command=HCI_Cmd_LE_Set_Extended_Scan_Enable(False,1)
+        else:
+            command=HCI_Cmd_LE_Scan_Enable(False,False)
+
         return self._send_command_no_wait(command)
 
     def _send_command_no_wait(self,command):
