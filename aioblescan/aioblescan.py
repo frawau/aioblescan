@@ -950,6 +950,93 @@ class HCI_Cmd_LE_Set_Advertised_Params(HCI_Command):
                                       2: "Connection",
                                       3: "Scan and Connection"}))
 
+class HCI_Cmd_LE_Set_Extended_Scan_Enable(HCI_Command):
+    """Class representing a HCI command to enable/disable BLE scanning.
+
+        :param enable: enable/disable scanning.
+        :type enable: bool
+        :param filter_dups: filter duplicates.
+        :param filter_dups: filter duplicates 0 => Duplicate filtering disabled
+                                              1 => Duplicate filtering enabled (default)
+                                              2 => Duplicate filtering enabled, reset for each scan period
+        :type filter_dups: int
+        :param duration: scan duration in ms. 0 as scan continuously until explicitly disable. Default 0.
+        :type duration: int
+        :param period: scan period in ms. 0 as scan continuously. Default 0.
+        :type period: int
+        :returns: HCI_Cmd_LE_Set_Extended_Scan_Enable instance.
+        :rtype: HCI_Cmd_LE_Set_Extended_Scan_Enable
+
+    """
+
+    def __init__(self,enable=True,filter_dups=1,duration=0,period=0):
+        super(self.__class__, self).__init__(b"\x08",b"\x42")
+        self.payload.append(Bool("enable",enable))
+        self.payload.append(EnumByte("filter",filter_dups,
+                                        {0: "Disable",
+                                         1: "Enable",
+                                         2: "Eanble with reset"}))
+        self.payload.append(UShortInt("Duration",int(round(min(0xffff * 10,duration)/10)),endian="little"))
+        self.payload.append(UShortInt("Period",int(round(min(0xffff * 1280,max(period,duration))/1280)),endian="little"))
+
+class HCI_Cmd_LE_Set_Extended_Scan_Params(HCI_Command):
+    """Class representing an HCI command to set the scanning parameters.
+
+    This will set a number of parameters related to the scanning functions. For the
+    interval and window, it will always silently enforce the Specs that says it should be >= 2.5 ms
+    and <= 10.24s. It will also silently enforce window <= interval
+
+        :param oaddr_type: Type of own address Value 0 => public (default)
+                                                     1 => Random
+                                                     2 => Private with public fallback
+                                                     3 => Private with random fallback
+        :type oaddr_type: int
+        :param filter: How white list filter is applied. 0 => No filter (Default)
+                                                         1 => sender must be in white list
+                                                         2 => Similar to 0. Some directed advertising may be received.
+                                                         3 => Similar to 1. Some directed advertising may be received.
+        :type filter: int
+        :param phys: Scanning PHYs bit field mask as bit 0 => LE 1M PHY (default)
+                                                     bit 2 => LE Coded PHY
+        :type phys: int
+        :param scan_type: Type of scanning. 0 => Passive (default)
+                                            1 => Active
+        :type scan_type: int
+        :param interval: Time in ms between the start of a scan and the next scan start. Default 10
+        :type interval: int/float
+        :param window: maximum advertising interval in ms. Default 10
+        :type window: int.float
+        :returns: HCI_Cmd_LE_Set_Extended_Scan_Params instance.
+        :rtype: HCI_Cmd_LE_Set_Extended_Scan_Params
+
+    """
+
+    def __init__(self,oaddr_type=0,filter=0,phys=1,scan_type=[0]*8,interval=[10]*8, window=[750]*8):
+
+        super(self.__class__, self).__init__(b"\x08",b"\x41")
+        self.payload.append(EnumByte("own addresss type",oaddr_type,
+                                     {0: "Public",
+                                      1: "Random",
+                                      2: "Private IRK or Public",
+                                      3: "Private IRK or Random"}))
+        self.payload.append(EnumByte("filter policy",filter,
+                                     {0: "None",
+                                      1: "Sender In White List",
+                                      2: "Almost None",
+                                      3: "SIWL and some"}))
+        self.payload.append(BitFieldByte("PHYs",phys,
+                                         ["LE 1M","Reserv","LE Coded","Reserv","Reserv","Reserv","Reserv", "Reserv"]))
+
+        i=0
+        mask=0x01
+        while i < 8:
+            if phys & mask:
+                self.payload.append(EnumByte("scan type",scan_type[i], {0: "Passive",1: "Active"}))
+                self.payload.append(UShortInt("Interval",int(round(min(10240,max(2.5,interval[i]))/0.625)),endian="little"))
+                self.payload.append(UShortInt("Window",int(round(min(10240,max(2.5,min(interval[i],window[i])))/0.625)),endian="little"))
+            mask<<=1
+            i+=1
+
 class HCI_Cmd_Reset(HCI_Command):
     """Class representing an HCI command to reset the adapater.
 
