@@ -1334,25 +1334,33 @@ class BLEScanRequester(asyncio.Protocol):
         command=HCI_Cmd_Read_Local_Supported_Commands()
         self.transport.write(command.encode())
 
-        command=HCI_Cmd_LE_Set_Scan_Params()
-        self.transport.write(command.encode())
-
     def connection_lost(self, exc):
         super().connection_lost(exc)
 
-    def send_scan_request(self):
+    async def send_scan_request(self):
         '''Sending LE scan request'''
+        await self._initialized.wait()
+
+        command=HCI_Cmd_LE_Set_Scan_Params()
+        self._send_command_no_wait(command)
+
         command=HCI_Cmd_LE_Scan_Enable(True,False)
-        self.transport.write(command.encode())
+        return self._send_command_no_wait(command)
 
-    def stop_scan_request(self):
+    async def stop_scan_request(self):
         '''Sending LE scan request'''
-        command=HCI_Cmd_LE_Scan_Enable(False,False)
-        self.transport.write(command.encode())
+        await self._initialized.wait()
 
-    def send_command(self,command):
+        command=HCI_Cmd_LE_Scan_Enable(False,False)
+        return self._send_command_no_wait(command)
+
+    def _send_command_no_wait(self,command):
+        return self.transport.write(command.encode())
+
+    async def send_command(self,command):
         '''Sending an arbitrary command'''
-        self.transport.write(command.encode())
+        await self._initialized.wait()
+        return self._send_command_no_wait(command)
 
     def data_received(self, packet):
         ev=HCI_Event()

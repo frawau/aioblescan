@@ -110,9 +110,9 @@ conn,btctrl = event_loop.run_until_complete(fac)
 btctrl.process=my_process
 if opts.advertise:
     command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
-    btctrl.send_command(command)
+    event_loop.run_until_complete(btctrl.send_command(command))
     command = aiobs.HCI_Cmd_LE_Set_Advertised_Params(interval_min=opts.advertise,interval_max=opts.advertise)
-    btctrl.send_command(command)
+    event_loop.run_until_complete(btctrl.send_command(command))
     if opts.url:
         myeddy = EddyStone(param=opts.url)
     else:
@@ -120,12 +120,12 @@ if opts.advertise:
     if opts.txpower:
         myeddy.power=opts.txpower
     command = aiobs.HCI_Cmd_LE_Set_Advertised_Msg(msg=myeddy)
-    btctrl.send_command(command)
+    event_loop.run_until_complete(btctrl.send_command(command))
     command = aiobs.HCI_Cmd_LE_Advertise(enable=True)
-    btctrl.send_command(command)
+    event_loop.run_until_complete(btctrl.send_command(command))
 
 #Probe
-btctrl.send_scan_request()
+event_loop.run_until_complete(btctrl.send_scan_request())
 try:
     # event_loop.run_until_complete(coro)
     event_loop.run_forever()
@@ -133,8 +133,8 @@ except KeyboardInterrupt:
     print('keyboard interrupt')
 finally:
     print('closing event loop')
-    btctrl.stop_scan_request()
+    event_loop.run_until_complete(btctrl.stop_scan_request())
     command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
-    btctrl.send_command(command)
+    event_loop.run_until_complete(btctrl.send_command(command))
     conn.close()
     event_loop.close()
