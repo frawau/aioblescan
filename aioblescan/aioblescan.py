@@ -779,6 +779,14 @@ class RepeatedField(Packet):
         for field in self.payload:
             field.show(depth+1)
 
+class HCI_Cmd_Read_Local_Supported_Commands(HCI_Command):
+    """Class representing a HCI command to read commands supported by local
+       controller.
+    """
+
+    def __init__(self):
+        super(self.__class__, self).__init__(b"\x04",b"\x02")
+
 class HCI_Cmd_LE_Scan_Enable(HCI_Command):
     """Class representing a command HCI command to enable/disable BLE scanning.
 
@@ -1313,6 +1321,8 @@ def create_bt_socket(interface=0):
 class BLEScanRequester(asyncio.Protocol):
     '''Protocol handling the requests'''
     def __init__(self):
+        self._supported_commands = None
+        self._initialized = asyncio.Event()
         self.transport = None
         self.smac = None
         self.sip = None
@@ -1320,6 +1330,10 @@ class BLEScanRequester(asyncio.Protocol):
 
     def connection_made(self, transport):
         self.transport = transport
+
+        command=HCI_Cmd_Read_Local_Supported_Commands()
+        self.transport.write(command.encode())
+
         command=HCI_Cmd_LE_Set_Scan_Params()
         self.transport.write(command.encode())
 
@@ -1348,9 +1362,20 @@ class BLEScanRequester(asyncio.Protocol):
             cmd=cc.retrieve(OgfOcf)[0]
             opcode=(ord(cmd.ogf) << 10) | ord(cmd.ocf)
             resp=cc.retrieve('resp code')[0]
+            if opcode == 0x1002:
+                self._handle_cc_read_local_supported_commands(resp)
+
             return
 
         self.process(ev, extra_data)
+
+    def _handle_cc_read_local_supported_commands(self, resp):
+        if resp.val[0] == 0:
+            self._supported_commands = resp.val[1:]
+        else:
+            self._supported_commands = [0]*64
+
+        self._initialized.set()
 
     def default_process(self,ev,extra_data):
         pass
