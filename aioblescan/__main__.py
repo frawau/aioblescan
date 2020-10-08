@@ -64,11 +64,9 @@ except Exception as e:
     parser.error("Error: " + str(e))
     sys.exit()
 
-def my_process(data):
+def my_process(ev, extra_data):
     global opts
 
-    ev=aiobs.HCI_Event()
-    xx=ev.decode(data)
     if opts.mac:
         goon = False
         mac= ev.retrieve("peer")

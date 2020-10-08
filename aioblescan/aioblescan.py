@@ -1341,7 +1341,16 @@ class BLEScanRequester(asyncio.Protocol):
         self.transport.write(command.encode())
 
     def data_received(self, packet):
-        self.process(packet)
+        ev=HCI_Event()
+        extra_data=ev.decode(packet)
+        if ev.payload[0].val == b'\x0e':
+            cc=ev.retrieve("Command Completed")[0]
+            cmd=cc.retrieve(OgfOcf)[0]
+            opcode=(ord(cmd.ogf) << 10) | ord(cmd.ocf)
+            resp=cc.retrieve('resp code')[0]
+            return
 
-    def default_process(self,data):
+        self.process(ev, extra_data)
+
+    def default_process(self,ev,extra_data):
         pass
