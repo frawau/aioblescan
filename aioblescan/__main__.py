@@ -29,6 +29,7 @@ import aioblescan as aiobs
 from aioblescan.plugins import EddyStone
 from aioblescan.plugins import RuuviWeather
 from aioblescan.plugins import BlueMaestro
+from aioblescan.plugins import ATCMiThermometer
 
 
 def check_mac(val):
@@ -48,6 +49,8 @@ parser.add_argument("-r","--ruuvi", action='store_true', default=False,
                     help="Look only for Ruuvi tag Weather station messages")
 parser.add_argument("-p","--pebble", action='store_true', default=False,
                     help="Look only for Pebble Environment Monitor")
+parser.add_argument("-A","--atcmi", action='store_true', default=False,
+                    help="Look only for ATC_MiThermometer tag messages")
 parser.add_argument("-R","--raw", action='store_true', default=False,
                     help="Also show the raw data.")
 parser.add_argument("-a","--advertise", type= int, default=0,
@@ -93,6 +96,10 @@ def my_process(data):
         xx=BlueMaestro().decode(ev)
         if xx:
             print("Pebble info {}".format(xx))
+    elif opts.atcmi:
+        xx = ATCMiThermometer().decode(ev)
+        if xx:
+            print("Temperature info {}".format(xx))
     else:
         ev.show(0)
 
