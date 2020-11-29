@@ -65,7 +65,7 @@ You get
    Google Beacon {'tx_power': -7, 'url': 'https://ruu.vi/#BEgYAMR8n', 'mac address': 'fb:86:84:dd:aa:bb', 'rssi': -52}
    Google Beacon {'tx_power': -7, 'url': 'https://ruu.vi/#BEgYAMR8n', 'mac address': 'fb:86:84:dd:aa:bb', 'rssi': -53}
 
-To check ATC_MiThermometer with [custom firmware](github.com/atc1441/ATC_MiThermometer) beacon
+To check ATC_MiThermometer with [custom firmware](https://github.com/atc1441/ATC_MiThermometer) beacon
 
 ::
 
