@@ -4,10 +4,11 @@ from aioblescan.plugins.atcmithermometer import *
 
 
 @pytest.mark.parametrize(
-    "data, temp, humidity, battery, battery_volts, counter",
+    "data, mac, temp, humidity, battery, battery_volts, counter",
     [
         (
             b"\x04>\x1d\x02\x01\x00\x008R@8\xc1\xa4\x11\x10\x16\x1a\x18\xa4\xc18@R8\x00\xf3%U\x0b\x9f\xde\xdb",
+            "a4:c1:38:40:52:38",
             24.3,
             37,
             85,
@@ -15,7 +16,8 @@ from aioblescan.plugins.atcmithermometer import *
             222,
         ),
         (
-            b"\x04>\x1d\x02\x01\x00\x008R@8\xc1\xa4\x11\x10\x16\x1a\x18\xa4\xc18@R8\x01\x08\x1aU\x0b\x9f\xe0\xd5",
+            b"\x04>\x1d\x02\x01\x00\x009R@8\xc1\xa4\x11\x10\x16\x1a\x18\xa4\xc18@R9\x01\x08\x1aU\x0b\x9f\xe0\xd5",
+            "a4:c1:38:40:52:39",
             26.4,
             26,
             85,
@@ -23,7 +25,8 @@ from aioblescan.plugins.atcmithermometer import *
             224,
         ),
         (
-            b"\x04>\x1d\x02\x01\x00\x008R@8\xc1\xa4\x11\x10\x16\x1a\x18\xa4\xc18@R8\xff\xd3,B\n\xfe\xfb\xce",
+            b"\x04>\x1d\x02\x01\x00\x008S@8\xc1\xa4\x11\x10\x16\x1a\x18\xa4\xc18@S8\xff\xd3,B\n\xfe\xfb\xce",
+            "a4:c1:38:40:53:38",
             -4.5,
             44,
             66,
@@ -32,10 +35,11 @@ from aioblescan.plugins.atcmithermometer import *
         ),
     ],
 )
-def test_foo(data, temp, humidity, battery, battery_volts, counter):
+def test_some_packets(data, mac, temp, humidity, battery, battery_volts, counter):
     ev = aiobs.HCI_Event()
     ev.decode(data)
     xx = ATCMiThermometer().decode(ev)
+    assert mac == xx["mac"], "Wrong MAC addr"
     assert temp == xx["temp"], "Wrong temperature C"
     assert humidity == xx["humidity"], "Wrong humidity %"
     assert battery == xx["battery"], "Wrong battery %"

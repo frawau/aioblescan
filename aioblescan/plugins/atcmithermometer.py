@@ -35,16 +35,17 @@ def parse(packet):
         if b"\x18\x1a" == uuid:
             mac_in_payload = ":".join("%02x" % x for x in adv_payload[0].val[:6])
             if mac == mac_in_payload:
-                return parse_payload(adv_payload[0].val)
+                return parse_payload(mac, adv_payload[0].val)
 
 
-def parse_payload(payload):
+def parse_payload(mac, payload):
     temp = int.from_bytes(payload[6:8], "big", signed=True) / 10.0
     humidity = int.from_bytes(payload[8:9], "big")
     battery = int.from_bytes(payload[9:10], "big")
     battery_volts = int.from_bytes(payload[10:12], "big") / 1000.0
     counter = int.from_bytes(payload[12:13], "big")
     return {
+        "mac": mac,
         "temp": temp,
         "humidity": humidity,
         "battery": battery,
