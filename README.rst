@@ -65,6 +65,19 @@ You get
    Google Beacon {'tx_power': -7, 'url': 'https://ruu.vi/#BEgYAMR8n', 'mac address': 'fb:86:84:dd:aa:bb', 'rssi': -52}
    Google Beacon {'tx_power': -7, 'url': 'https://ruu.vi/#BEgYAMR8n', 'mac address': 'fb:86:84:dd:aa:bb', 'rssi': -53}
 
+To check ATC_MiThermometer with [custom firmware](github.com/atc1441/ATC_MiThermometer) beacon
+
+::
+
+    python3 -m aioblescan -A
+
+You get
+
+::
+
+    Temperature info {'mac address': 'a4:c1:38:40:52:38', 'temperature': 2.8, 'humidity': 62, 'battery': 72, 'battery_volts': 2.863, 'counter': 103, 'rssi': -76}
+    Temperature info {'mac address': 'a4:c1:38:40:52:38', 'temperature': 2.8, 'humidity': 62, 'battery': 72, 'battery_volts': 2.863, 'counter': 103, 'rssi': -77}
+
 For a generic advertise packet scanning
 
 ::
