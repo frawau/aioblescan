@@ -45,8 +45,8 @@ def parse_payload(mac, payload):
     battery_volts = int.from_bytes(payload[10:12], "big") / 1000.0
     counter = int.from_bytes(payload[12:13], "big")
     return {
-        "mac": mac,
-        "temp": temp,
+        "mac address": mac,
+        "temperature": temp,
         "humidity": humidity,
         "battery": battery,
         "battery_volts": battery_volts,

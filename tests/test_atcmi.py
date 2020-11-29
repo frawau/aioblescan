@@ -39,8 +39,8 @@ def test_some_packets(data, mac, temp, humidity, battery, battery_volts, counter
     ev = aiobs.HCI_Event()
     ev.decode(data)
     xx = ATCMiThermometer().decode(ev)
-    assert mac == xx["mac"], "Wrong MAC addr"
-    assert temp == xx["temp"], "Wrong temperature C"
+    assert mac == xx["mac address"], "Wrong MAC addr"
+    assert temp == xx["temperature"], "Wrong temperature C"
     assert humidity == xx["humidity"], "Wrong humidity %"
     assert battery == xx["battery"], "Wrong battery %"
     assert battery_volts == xx["battery_volts"], "Wrong battery V"
