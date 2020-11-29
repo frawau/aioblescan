@@ -19,6 +19,11 @@ setuptools.setup(name='aioblescan',
     keywords = ['bluetooth', 'advertising', 'hci', 'ble'],
     license='MIT',
     install_requires=[],
+    extras_require={
+        'dev': [
+            'pytest'
+        ]
+    },
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         # Pick your license as you wish (should match "license" above)
