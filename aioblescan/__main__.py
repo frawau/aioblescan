@@ -40,44 +40,88 @@ def check_mac(val):
         pass
     raise argparse.ArgumentTypeError("%s is not a MAC address" % val)
 
+
 parser = argparse.ArgumentParser(description="Track BLE advertised packets")
-parser.add_argument("-e", "--eddy", action='store_true', default=False,
-                    help="Look specificaly for Eddystone messages.")
-parser.add_argument("-m", "--mac", type=check_mac, action='append',
-                    help="Look for these MAC addresses.")
-parser.add_argument("-r","--ruuvi", action='store_true', default=False,
-                    help="Look only for Ruuvi tag Weather station messages")
-parser.add_argument("-p","--pebble", action='store_true', default=False,
-                    help="Look only for Pebble Environment Monitor")
-parser.add_argument("-A","--atcmi", action='store_true', default=False,
-                    help="Look only for ATC_MiThermometer tag messages")
-parser.add_argument("-R","--raw", action='store_true', default=False,
-                    help="Also show the raw data.")
-parser.add_argument("-a","--advertise", type= int, default=0,
-                    help="Broadcast like an EddyStone Beacon. Set the interval between packet in millisec")
-parser.add_argument("-u","--url", type= str, default="",
-                    help="When broadcasting like an EddyStone Beacon, set the url.")
-parser.add_argument("-t","--txpower", type= int, default=0,
-                    help="When broadcasting like an EddyStone Beacon, set the Tx power")
-parser.add_argument("-D","--device", type=int, default=0,
-                    help="Select the hciX device to use (default 0, i.e. hci0).")
+parser.add_argument(
+    "-e",
+    "--eddy",
+    action="store_true",
+    default=False,
+    help="Look specificaly for Eddystone messages.",
+)
+parser.add_argument(
+    "-m", "--mac", type=check_mac, action="append", help="Look for these MAC addresses."
+)
+parser.add_argument(
+    "-r",
+    "--ruuvi",
+    action="store_true",
+    default=False,
+    help="Look only for Ruuvi tag Weather station messages",
+)
+parser.add_argument(
+    "-p",
+    "--pebble",
+    action="store_true",
+    default=False,
+    help="Look only for Pebble Environment Monitor",
+)
+parser.add_argument(
+    "-A",
+    "--atcmi",
+    action="store_true",
+    default=False,
+    help="Look only for ATC_MiThermometer tag messages",
+)
+parser.add_argument(
+    "-R", "--raw", action="store_true", default=False, help="Also show the raw data."
+)
+parser.add_argument(
+    "-a",
+    "--advertise",
+    type=int,
+    default=0,
+    help="Broadcast like an EddyStone Beacon. Set the interval between packet in millisec",
+)
+parser.add_argument(
+    "-u",
+    "--url",
+    type=str,
+    default="",
+    help="When broadcasting like an EddyStone Beacon, set the url.",
+)
+parser.add_argument(
+    "-t",
+    "--txpower",
+    type=int,
+    default=0,
+    help="When broadcasting like an EddyStone Beacon, set the Tx power",
+)
+parser.add_argument(
+    "-D",
+    "--device",
+    type=int,
+    default=0,
+    help="Select the hciX device to use (default 0, i.e. hci0).",
+)
 try:
     opts = parser.parse_args()
 except Exception as e:
     parser.error("Error: " + str(e))
     sys.exit()
 
+
 def my_process(data):
     global opts
 
-    ev=aiobs.HCI_Event()
-    xx=ev.decode(data)
+    ev = aiobs.HCI_Event()
+    xx = ev.decode(data)
     if opts.mac:
         goon = False
-        mac= ev.retrieve("peer")
+        mac = ev.retrieve("peer")
         for x in mac:
             if x.val in opts.mac:
-                goon=True
+                goon = True
                 break
         if not goon:
             return
@@ -85,15 +129,15 @@ def my_process(data):
     if opts.raw:
         print("Raw data: {}".format(ev.raw_data))
     if opts.eddy:
-        xx=EddyStone().decode(ev)
+        xx = EddyStone().decode(ev)
         if xx:
             print("Google Beacon {}".format(xx))
     elif opts.ruuvi:
-        xx=RuuviWeather().decode(ev)
+        xx = RuuviWeather().decode(ev)
         if xx:
             print("Weather info {}".format(xx))
     elif opts.pebble:
-        xx=BlueMaestro().decode(ev)
+        xx = BlueMaestro().decode(ev)
         if xx:
             print("Pebble info {}".format(xx))
     elif opts.atcmi:
@@ -103,45 +147,50 @@ def my_process(data):
     else:
         ev.show(0)
 
+
 event_loop = asyncio.get_event_loop()
 
-#First create and configure a raw socket
+# First create and configure a raw socket
 mysocket = aiobs.create_bt_socket(opts.device)
 
-#create a connection with the raw socket
-#This used to work but now requires a STREAM socket.
-#fac=event_loop.create_connection(aiobs.BLEScanRequester,sock=mysocket)
-#Thanks to martensjacobs for this fix
-fac=event_loop._create_connection_transport(mysocket,aiobs.BLEScanRequester,None,None)
-#Start it
-conn,btctrl = event_loop.run_until_complete(fac)
-#Attach your processing
-btctrl.process=my_process
+# create a connection with the raw socket
+# This used to work but now requires a STREAM socket.
+# fac=event_loop.create_connection(aiobs.BLEScanRequester,sock=mysocket)
+# Thanks to martensjacobs for this fix
+fac = event_loop._create_connection_transport(
+    mysocket, aiobs.BLEScanRequester, None, None
+)
+# Start it
+conn, btctrl = event_loop.run_until_complete(fac)
+# Attach your processing
+btctrl.process = my_process
 if opts.advertise:
     command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
     btctrl.send_command(command)
-    command = aiobs.HCI_Cmd_LE_Set_Advertised_Params(interval_min=opts.advertise,interval_max=opts.advertise)
+    command = aiobs.HCI_Cmd_LE_Set_Advertised_Params(
+        interval_min=opts.advertise, interval_max=opts.advertise
+    )
     btctrl.send_command(command)
     if opts.url:
         myeddy = EddyStone(param=opts.url)
     else:
         myeddy = EddyStone()
     if opts.txpower:
-        myeddy.power=opts.txpower
+        myeddy.power = opts.txpower
     command = aiobs.HCI_Cmd_LE_Set_Advertised_Msg(msg=myeddy)
     btctrl.send_command(command)
     command = aiobs.HCI_Cmd_LE_Advertise(enable=True)
     btctrl.send_command(command)
 
-#Probe
+# Probe
 btctrl.send_scan_request()
 try:
     # event_loop.run_until_complete(coro)
     event_loop.run_forever()
 except KeyboardInterrupt:
-    print('keyboard interrupt')
+    print("keyboard interrupt")
 finally:
-    print('closing event loop')
+    print("closing event loop")
     btctrl.stop_scan_request()
     command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
     btctrl.send_command(command)
