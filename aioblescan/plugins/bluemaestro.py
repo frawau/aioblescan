@@ -16,16 +16,19 @@ class BlueMaestro(object):
     def decode(self, packet):
         data = {}
         raw_data = packet.retrieve("Manufacturer Specific Data")
-        raw_data = raw_data.payload
-        if raw_data:
-            mfg_id = raw_data[0].val
-            if mfg_id == BLUEMAESTRO:
-                pckt = raw_data[1].val
-                data["version"] = unpack("<B", pckt[0:1])[0]
-                data["batt_lvl"] = unpack("<B", pckt[1:2])[0]
-                data["logging"] = unpack(">H", pckt[2:4])[0]
-                data["interval"] = unpack(">H", pckt[4:6])[0]
-                data["temperature"] = unpack(">h", pckt[6:8])[0] / 10
-                data["humidity"] = unpack(">h", pckt[8:10])[0] / 10
-                data["pressure"] = unpack(">h", pckt[10:12])[0] / 10
+        try:
+            raw_data = raw_data.payload
+            if raw_data:
+                mfg_id = raw_data[0].val
+                if mfg_id == BLUEMAESTRO:
+                    pckt = raw_data[1].val
+                    data["version"] = unpack("<B", pckt[0:1])[0]
+                    data["batt_lvl"] = unpack("<B", pckt[1:2])[0]
+                    data["logging"] = unpack(">H", pckt[2:4])[0]
+                    data["interval"] = unpack(">H", pckt[4:6])[0]
+                    data["temperature"] = unpack(">h", pckt[6:8])[0] / 10
+                    data["humidity"] = unpack(">h", pckt[8:10])[0] / 10
+                    data["pressure"] = unpack(">h", pckt[10:12])[0] / 10
+        except:
+            pass
         return data
