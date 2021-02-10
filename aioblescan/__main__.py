@@ -31,6 +31,9 @@ from aioblescan.plugins import RuuviWeather
 from aioblescan.plugins import BlueMaestro
 from aioblescan.plugins import ATCMiThermometer
 
+# global
+opts = None
+
 
 def check_mac(val):
     try:
@@ -41,7 +44,46 @@ def check_mac(val):
     raise argparse.ArgumentTypeError("%s is not a MAC address" % val)
 
 
+def my_process(data):
+    global opts
+
+    ev = aiobs.HCI_Event()
+    xx = ev.decode(data)
+    if opts.mac:
+        goon = False
+        mac = ev.retrieve("peer")
+        for x in mac:
+            if x.val in opts.mac:
+                goon = True
+                break
+        if not goon:
+            return
+
+    if opts.raw:
+        print("Raw data: {}".format(ev.raw_data))
+    if opts.eddy:
+        xx = EddyStone().decode(ev)
+        if xx:
+            print("Google Beacon {}".format(xx))
+    elif opts.ruuvi:
+        xx = RuuviWeather().decode(ev)
+        if xx:
+            print("Weather info {}".format(xx))
+    elif opts.pebble:
+        xx = BlueMaestro().decode(ev)
+        if xx:
+            print("Pebble info {}".format(xx))
+    elif opts.atcmi:
+        xx = ATCMiThermometer().decode(ev)
+        if xx:
+            print("Temperature info {}".format(xx))
+    else:
+        ev.show(0)
+
+
 def main(args=None):
+    global opts
+
     parser = argparse.ArgumentParser(description="Track BLE advertised packets")
     parser.add_argument(
         "-e",
@@ -118,42 +160,6 @@ def main(args=None):
     except Exception as e:
         parser.error("Error: " + str(e))
         sys.exit()
-
-    def my_process(data):
-        global opts
-
-        ev = aiobs.HCI_Event()
-        xx = ev.decode(data)
-        if opts.mac:
-            goon = False
-            mac = ev.retrieve("peer")
-            for x in mac:
-                if x.val in opts.mac:
-                    goon = True
-                    break
-            if not goon:
-                return
-
-        if opts.raw:
-            print("Raw data: {}".format(ev.raw_data))
-        if opts.eddy:
-            xx = EddyStone().decode(ev)
-            if xx:
-                print("Google Beacon {}".format(xx))
-        elif opts.ruuvi:
-            xx = RuuviWeather().decode(ev)
-            if xx:
-                print("Weather info {}".format(xx))
-        elif opts.pebble:
-            xx = BlueMaestro().decode(ev)
-            if xx:
-                print("Pebble info {}".format(xx))
-        elif opts.atcmi:
-            xx = ATCMiThermometer().decode(ev)
-            if xx:
-                print("Temperature info {}".format(xx))
-        else:
-            ev.show(0)
 
     event_loop = asyncio.get_event_loop()
 
