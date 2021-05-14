@@ -242,6 +242,7 @@ class BitFieldByte:
     @property
     def val(self):
         resu = {}
+        mybit = 0x80
         for x in self.loval:
             if x not in ["Undef", "Reserv"]:
                 resu[x] = (self._val & mybit) > 0
@@ -644,16 +645,16 @@ class NBytes_List:
         :param name: The name of the instance
         :type name: str
         :param bytes: Length of the bytes strings (2, 4 or 16)
-        :type bytes: int
+        :type nbytes: int
         :returns: NBytes_List instance.
         :rtype: NBytes_List
 
     """
 
-    def __init__(self, name, bytes=2):
+    def __init__(self, name, nbytes=2):
         # Bytes should be one of 2, 4 or 16
         self.name = name
-        self.length = bytes
+        self.length = nbytes
         self.lonbytes = []
 
     def decode(self, data):
@@ -817,6 +818,7 @@ class HCI_Command(Packet):
 
 class RepeatedField(Packet):
     def __init__(self, name, subfield_cls, length_field_cls=UIntByte):
+        super().__init__()
         self.name = name
         self.subfield_cls = subfield_cls
         self.length_field = length_field_cls("count of " + name)
@@ -838,6 +840,22 @@ class RepeatedField(Packet):
             field.show(depth + 1)
 
 
+class HCI_Cmd_Read_Local_Supported_Commands(HCI_Command):
+    """Class representing a HCI command to read commands supported by local
+       controller.
+    """
+
+    def __init__(self):
+        super().__init__(b"\x04", b"\x02")
+
+
+class HCI_Cmd_LE_Read_Local_Supported_Features(HCI_Command):
+    """Class representing a HCI command to read LE features."""
+
+    def __init__(self):
+        super().__init__(b"\x08", b"\x03")
+
+
 class HCI_Cmd_LE_Scan_Enable(HCI_Command):
     """Class representing a command HCI command to enable/disable BLE scanning.
 
@@ -851,7 +869,7 @@ class HCI_Cmd_LE_Scan_Enable(HCI_Command):
     """
 
     def __init__(self, enable=True, filter_dups=True):
-        super(self.__class__, self).__init__(b"\x08", b"\x0c")
+        super().__init__(b"\x08", b"\x0c")
         self.payload.append(Bool("enable", enable))
         self.payload.append(Bool("filter", filter_dups))
 
@@ -875,19 +893,19 @@ class HCI_Cmd_LE_Set_Scan_Params(HCI_Command):
                                                      2 => Private with public fallback
                                                      3 => Private with random fallback
         :type oaddr_type: int
-        :param filter: How white list filter is applied. 0 => No filter (Default)
-                                                         1 => sender must be in white list
-                                                         2 => Similar to 0. Some directed advertising may be received.
-                                                         3 => Similar to 1. Some directed advertising may be received.
-        :type filter: int
-        :returns: HCI_Cmd_LE_Scan_Params instance.
-        :rtype: HCI_Cmd_LE_Scan_Params
+        :param nfilter: How white list filter is applied. 0 => No filter (Default)
+                                                          1 => sender must be in white list
+                                                          2 => Similar to 0. Some directed advertising may be received.
+                                                          3 => Similar to 1. Some directed advertising may be received.
+        :type nfilter: int
+        :returns: HCI_Cmd_LE_Set_Scan_Params instance.
+        :rtype: HCI_Cmd_LE_Set_Scan_Params
 
     """
 
-    def __init__(self, scan_type=0x0, interval=10, window=750, oaddr_type=0, filter=0):
+    def __init__(self, scan_type=0x0, interval=10, window=750, oaddr_type=0, nfilter=0):
 
-        super(self.__class__, self).__init__(b"\x08", b"\x0b")
+        super().__init__(b"\x08", b"\x0b")
         self.payload.append(
             EnumByte("scan type", scan_type, {0: "Passive", 1: "Active"})
         )
@@ -920,7 +938,7 @@ class HCI_Cmd_LE_Set_Scan_Params(HCI_Command):
         self.payload.append(
             EnumByte(
                 "filter policy",
-                filter,
+                nfilter,
                 {
                     0: "None",
                     1: "Sender In White List",
@@ -942,7 +960,7 @@ class HCI_Cmd_LE_Advertise(HCI_Command):
     """
 
     def __init__(self, enable=True):
-        super(self.__class__, self).__init__(b"\x08", b"\x0a")
+        super().__init__(b"\x08", b"\x0a")
         self.payload.append(Bool("enable", enable))
 
 
@@ -957,7 +975,7 @@ class HCI_Cmd_LE_Set_Advertised_Msg(HCI_Command):
     """
 
     def __init__(self, msg=EmptyPayload()):
-        super(self.__class__, self).__init__(b"\x08", b"\x08")
+        super().__init__(b"\x08", b"\x08")
         self.payload.append(msg)
 
 
@@ -972,7 +990,7 @@ class HCI_Cmd_LE_Set_Advertised_Params(HCI_Command):
         :type interval_min: int/float
         :param interval_max: maximum advertising interval in ms. Default 750
         :type interval_max: int/float
-        :param adv_type: Type of advertising. Value 0 +> Connectable, Scannable advertising
+        :param adv_type: Type of advertising. Value 0 +> Connectable, Scanable advertising
                                                     1 => Connectable directed advertising (High duty cycle)
                                                     2 => Scannable Undirected advertising
                                                     3 => Non connectable undirected advertising (default)
@@ -990,11 +1008,11 @@ class HCI_Cmd_LE_Set_Advertised_Params(HCI_Command):
         :param cmap: Channel map. A bit field dfined as  "Channel 37","Channel 38","Channel 39","RFU","RFU","RFU","RFU","RFU"
         Default value is 0x7. The value 0x0 is RFU.
         :type cmap: int
-        :param filter: How white list filter is applied. 0 => No filter (Default)
-                                                         1 => scan are filtered
-                                                         2 => Connection are filtered
-                                                         3 => scan and connection are filtered
-        :type filter: int
+        :param nfilter: How white list filter is applied. 0 => No filter (Default)
+                                                          1 => scan are filtered
+                                                          2 => Connection are filtered
+                                                          3 => scan and connection are filtered
+        :type nfilter: int
         :returns: HCI_Cmd_LE_Scan_Params instance.
         :rtype: HCI_Cmd_LE_Scan_Params
 
@@ -1009,10 +1027,10 @@ class HCI_Cmd_LE_Set_Advertised_Params(HCI_Command):
         paddr_type=0,
         peer_addr="00:00:00:00:00:00",
         cmap=0x7,
-        filter=0,
+        nfilter=0,
     ):
 
-        super(self.__class__, self).__init__(b"\x08", b"\x06")
+        super().__init__(b"\x08", b"\x06")
         self.payload.append(
             UShortInt(
                 "Adv minimum",
@@ -1078,10 +1096,167 @@ class HCI_Cmd_LE_Set_Advertised_Params(HCI_Command):
         self.payload.append(
             EnumByte(
                 "filter policy",
-                filter,
+                nfilter,
                 {0: "None", 1: "Scan", 2: "Connection", 3: "Scan and Connection"},
             )
         )
+
+
+class HCI_Cmd_LE_Set_Extended_Scan_Enable(HCI_Command):
+    """Class representing a HCI command to enable/disable BLE scanning.
+
+        :param enable: enable/disable scanning.
+        :type enable: bool
+        :param filter_dups: filter duplicates.
+        :param filter_dups: filter duplicates 0 => Duplicate filtering disabled
+                                              1 => Duplicate filtering enabled (default)
+                                              2 => Duplicate filtering enabled, reset for each scan period
+        :type filter_dups: int
+        :param duration: scan duration in ms. 0 as scan continuously until explicitly disable. Default 0.
+        :type duration: int
+        :param period: scan period in ms. 0 as scan continuously. Default 0.
+        :type period: int
+        :returns: HCI_Cmd_LE_Set_Extended_Scan_Enable instance.
+        :rtype: HCI_Cmd_LE_Set_Extended_Scan_Enable
+
+    """
+
+    def __init__(self, enable=True, filter_dups=1, duration=0, period=0):
+        super().__init__(b"\x08", b"\x42")
+        self.payload.append(Bool("enable", enable))
+        self.payload.append(
+            EnumByte(
+                "filter",
+                filter_dups,
+                {0: "Disable", 1: "Enable", 2: "Eanble with reset"},
+            )
+        )
+        self.payload.append(
+            UShortInt(
+                "Duration", int(round(min(0xFFFF * 10, duration) / 10)), endian="little"
+            )
+        )
+        self.payload.append(
+            UShortInt(
+                "Period",
+                int(round(min(0xFFFF * 1280, max(period, duration)) / 1280)),
+                endian="little",
+            )
+        )
+
+
+class HCI_Cmd_LE_Set_Extended_Scan_Params(HCI_Command):
+    """Class representing an HCI command to set the scanning parameters.
+
+    This will set a number of parameters related to the scanning functions. For the
+    interval and window, it will always silently enforce the Specs that says it should be >= 2.5 ms
+    and <= 10.24s. It will also silently enforce window <= interval
+
+        :param oaddr_type: Type of own address Value 0 => public (default)
+                                                     1 => Random
+                                                     2 => Private with public fallback
+                                                     3 => Private with random fallback
+        :type oaddr_type: int
+        :param filter: How white list filter is applied. 0 => No filter (Default)
+                                                         1 => sender must be in white list
+                                                         2 => Similar to 0. Some directed advertising may be received.
+                                                         3 => Similar to 1. Some directed advertising may be received.
+        :type filter: int
+        :param phys: Scanning PHYs bit field mask as bit 0 => LE 1M PHY (default)
+                                                     bit 2 => LE Coded PHY
+        :type phys: int
+        :param scan_type: Type of scanning. 0 => Passive (default)
+                                            1 => Active
+        :type scan_type: int
+        :param interval: Time in ms between the start of a scan and the next scan start. Default 10
+        :type interval: int/float
+        :param window: maximum advertising interval in ms. Default 10
+        :type window: int.float
+        :returns: HCI_Cmd_LE_Set_Extended_Scan_Params instance.
+        :rtype: HCI_Cmd_LE_Set_Extended_Scan_Params
+
+    """
+
+    def __init__(
+        self,
+        oaddr_type=0,
+        nfilter=0,
+        phys=1,
+        scan_type=[0] * 8,
+        interval=[10] * 8,
+        window=[750] * 8,
+    ):
+
+        super().__init__(b"\x08", b"\x41")
+        self.payload.append(
+            EnumByte(
+                "own addresss type",
+                oaddr_type,
+                {
+                    0: "Public",
+                    1: "Random",
+                    2: "Private IRK or Public",
+                    3: "Private IRK or Random",
+                },
+            )
+        )
+        self.payload.append(
+            EnumByte(
+                "filter policy",
+                nfilter,
+                {
+                    0: "None",
+                    1: "Sender In White List",
+                    2: "Almost None",
+                    3: "SIWL and some",
+                },
+            )
+        )
+        self.payload.append(
+            BitFieldByte(
+                "PHYs",
+                phys,
+                [
+                    "LE 1M",
+                    "Reserv",
+                    "LE Coded",
+                    "Reserv",
+                    "Reserv",
+                    "Reserv",
+                    "Reserv",
+                    "Reserv",
+                ],
+            )
+        )
+
+        i = 0
+        mask = 0x01
+        while i < 8:
+            if phys & mask:
+                self.payload.append(
+                    EnumByte("scan type", scan_type[i], {0: "Passive", 1: "Active"})
+                )
+                self.payload.append(
+                    UShortInt(
+                        "Interval",
+                        int(round(min(10240, max(2.5, interval[i])) / 0.625)),
+                        endian="little",
+                    )
+                )
+                self.payload.append(
+                    UShortInt(
+                        "Window",
+                        int(
+                            round(
+                                min(10240, max(2.5, min(interval[i], window[i])))
+                                / 0.625
+                            )
+                        ),
+                        endian="little",
+                    )
+                )
+            mask <<= 1
+            i += 1
 
 
 class HCI_Cmd_Reset(HCI_Command):
@@ -1094,7 +1269,7 @@ class HCI_Cmd_Reset(HCI_Command):
     """
 
     def __init__(self):
-        super(self.__class__, self).__init__(b"\x03", b"\x03")
+        super().__init__(b"\x03", b"\x03")
 
 
 ####
@@ -1140,7 +1315,6 @@ class HCI_Event(Packet):
 
 class HCI_CC_Event(Packet):
     """Command Complete event"""
-
     def __init__(self):
         self.name = "Command Completed"
         self.payload = [UIntByte("allow pkt"), OgfOcf("cmd"), Itself("resp code")]
@@ -1596,35 +1770,102 @@ class BLEScanRequester(asyncio.Protocol):
     """Protocol handling the requests"""
 
     def __init__(self):
+        self._supported_commands = None
+        self._le_features = None
+        self._initialized = asyncio.Event()
+        self._uninitialized = True
         self.transport = None
         self.smac = None
         self.sip = None
         self.process = self.default_process
 
+    def _use_ext_scan(self):
+        # Bluetooth Core Specification Vol 2, Part E, Section 6.27
+        # Use LE extended scan if HCI_Cmd_LE_Set_Extended_Scan_Enable/Params are
+        # supported.
+        return (self._supported_commands[37] & 0x60) == 0x60
+
     def connection_made(self, transport):
         self.transport = transport
-        command = HCI_Cmd_LE_Set_Scan_Params()
+
+        command = HCI_Cmd_Read_Local_Supported_Commands()
         self.transport.write(command.encode())
 
     def connection_lost(self, exc):
         super().connection_lost(exc)
 
-    def send_scan_request(self):
+    async def send_scan_request(self, isactivescan=False):
         """Sending LE scan request"""
-        command = HCI_Cmd_LE_Scan_Enable(True, False)
-        self.transport.write(command.encode())
+        await self._initialized.wait()
 
-    def stop_scan_request(self):
+        if self._use_ext_scan():
+            sparam = [int(isactivescan)] * 8
+            command = HCI_Cmd_LE_Set_Extended_Scan_Params(scan_type=sparam)
+            self._send_command_no_wait(command)
+
+            command = HCI_Cmd_LE_Set_Extended_Scan_Enable(True, 1)
+            return self._send_command_no_wait(command)
+        else:
+            sparam = int(isactivescan)
+            command = HCI_Cmd_LE_Set_Scan_Params(scan_type=sparam)
+            self._send_command_no_wait(command)
+
+            command = HCI_Cmd_LE_Scan_Enable(True, False)
+            return self._send_command_no_wait(command)
+
+    async def stop_scan_request(self):
         """Sending LE scan request"""
-        command = HCI_Cmd_LE_Scan_Enable(False, False)
-        self.transport.write(command.encode())
+        await self._initialized.wait()
 
-    def send_command(self, command):
+        if self._use_ext_scan():
+            command = HCI_Cmd_LE_Set_Extended_Scan_Enable(False, 1)
+        else:
+            command = HCI_Cmd_LE_Scan_Enable(False, False)
+
+        return self._send_command_no_wait(command)
+
+    def _send_command_no_wait(self, command):
+        return self.transport.write(command.encode())
+
+    async def send_command(self, command):
         """Sending an arbitrary command"""
-        self.transport.write(command.encode())
+        await self._initialized.wait()
+        return self._send_command_no_wait(command)
 
     def data_received(self, packet):
+        if self._uninitialized:
+            ev = HCI_Event()
+            extra_data = ev.decode(packet)
+            if ev.payload[0].val == b'\x0e':
+                cc = ev.retrieve("Command Completed")[0]
+                cmd = cc.retrieve(OgfOcf)[0]
+                opcode = (ord(cmd.ogf) << 10) | ord(cmd.ocf)
+                resp = cc.retrieve('resp code')[0]
+                if opcode == 0x1002:
+                    self._handle_cc_read_local_supported_commands(resp)
+                elif opcode == 0x2003:
+                    self._handle_cc_le_read_local_supported_features(resp)
+
+                return
         self.process(packet)
+
+    def _handle_cc_read_local_supported_commands(self, resp):
+        if resp.val[0] == 0:
+            self._supported_commands = resp.val[1:]
+        else:
+            self._supported_commands = [0] * 64
+
+        command = HCI_Cmd_LE_Read_Local_Supported_Features()
+        self.transport.write(command.encode())
+
+    def _handle_cc_le_read_local_supported_features(self, resp):
+        if resp.val[0] == 0:
+            self._le_features = resp.val[1:]
+        else:
+            self._le_features = [0] * 8
+
+        self._initialized.set()
+        self._uninitialized = False
 
     def default_process(self, data):
         pass
