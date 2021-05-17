@@ -1315,6 +1315,7 @@ class HCI_Event(Packet):
 
 class HCI_CC_Event(Packet):
     """Command Complete event"""
+
     def __init__(self):
         self.name = "Command Completed"
         self.payload = [UIntByte("allow pkt"), OgfOcf("cmd"), Itself("resp code")]
@@ -1836,11 +1837,11 @@ class BLEScanRequester(asyncio.Protocol):
         if self._uninitialized:
             ev = HCI_Event()
             extra_data = ev.decode(packet)
-            if ev.payload[0].val == b'\x0e':
+            if ev.payload[0].val == b"\x0e":
                 cc = ev.retrieve("Command Completed")[0]
                 cmd = cc.retrieve(OgfOcf)[0]
                 opcode = (ord(cmd.ogf) << 10) | ord(cmd.ocf)
-                resp = cc.retrieve('resp code')[0]
+                resp = cc.retrieve("resp code")[0]
                 if opcode == 0x1002:
                     self._handle_cc_read_local_supported_commands(resp)
                 elif opcode == 0x2003:
