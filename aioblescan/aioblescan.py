@@ -242,15 +242,16 @@ class BitFieldByte:
     @property
     def val(self):
         resu = {}
-        mybit = 0x80
+        mybit = 1 << (len(self.loval) - 1)
         for x in self.loval:
             if x not in ["Undef", "Reserv"]:
                 resu[x] = (self._val & mybit) > 0
+            mybit = mybit >> 1
         return resu
 
     def show(self, depth=0):
         print("{}{}:".format(PRINT_INDENT * depth, self.name))
-        mybit = 0x80
+        mybit = 1 << (len(self.loval) - 1)
         for x in self.loval:
             if x not in ["Undef", "Reserv"]:
                 print(
