@@ -28,7 +28,6 @@ import re
 import aioblescan as aiobs
 from aioblescan.plugins import EddyStone
 from aioblescan.plugins import RuuviWeather
-from aioblescan.plugins import BlueMaestro
 from aioblescan.plugins import ATCMiThermometer
 
 # global
