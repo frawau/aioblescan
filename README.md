@@ -5,7 +5,7 @@ aioblescan is a Python 3/asyncio library to listen for BLE advertized packets.
 [![PyPI version fury.io](https://badge.fury.io/py/aioblescan.svg)](https://pypi.python.org/pypi/aioblescan)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-licen)
 [![GITHUB-BADGE](https://github.com/frawau/aioblescan/workflows/black/badge.svg)](https://github.com/psf/black)
-
+[![Downloads](https://pepy.tech/badge/aioblescan/month)](https://pepy.tech/project/aioblescan)
 # Installation
 
 We are on PyPi so
