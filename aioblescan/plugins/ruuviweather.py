@@ -43,10 +43,7 @@ def get_temp(int, frac):
 
 
 class RuuviWeather(object):
-    """Class defining the content of an Ruuvi Tag advertisement.
-
-
-    """
+    """Class defining the content of an Ruuvi Tag advertisement."""
 
     def __init__(self):
         self.temp = 0

@@ -52,12 +52,12 @@ MY_UUID = b"\x90\x6e\xd6\xab\x67\x85\x4e\xab\x98\x47\xbf\x98\x89\xc0\x98\xae"
 class MACAddr:
     """Class representing a MAC address.
 
-        :param name: The name of the instance
-        :type name: str
-        :param mac: the mac address.
-        :type mac: str
-        :returns: MACAddr instance.
-        :rtype: MACAddr
+    :param name: The name of the instance
+    :type name: str
+    :param mac: the mac address.
+    :type mac: str
+    :returns: MACAddr instance.
+    :rtype: MACAddr
 
     """
 
@@ -68,8 +68,8 @@ class MACAddr:
     def encode(self):
         """Encode the MAC address to a byte array.
 
-            :returns: The encoded version of the MAC address
-            :rtype: bytes
+        :returns: The encoded version of the MAC address
+        :rtype: bytes
         """
         return int(self.val.replace(":", ""), 16).to_bytes(6, "little")
 
@@ -99,12 +99,12 @@ class MACAddr:
 class Bool:
     """Class representing a boolean value.
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the boolean value.
-        :type mac: bool
-        :returns: Bool instance.
-        :rtype: Bool
+    :param name: The name of the instance
+    :type name: str
+    :param val: the boolean value.
+    :type mac: bool
+    :returns: Bool instance.
+    :rtype: Bool
 
     """
 
@@ -130,12 +130,12 @@ class Bool:
 class Byte:
     """Class representing a single byte value.
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the single byte value.
-        :type val: byte
-        :returns: Byte instance.
-        :rtype: Byte
+    :param name: The name of the instance
+    :type name: str
+    :param val: the single byte value.
+    :type val: byte
+    :returns: Byte instance.
+    :rtype: Byte
 
     """
 
@@ -167,14 +167,14 @@ class Byte:
 class EnumByte:
     """Class representing a single byte value from a limited set of value
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the single byte value.
-        :type val: byte
-        :param loval: the list of possible values.
-        :type loval: dict
-        :returns: EnumByte instance.
-        :rtype: EnumByte
+    :param name: The name of the instance
+    :type name: str
+    :param val: the single byte value.
+    :type val: byte
+    :param loval: the list of possible values.
+    :type loval: dict
+    :returns: EnumByte instance.
+    :rtype: EnumByte
 
     """
 
@@ -212,14 +212,14 @@ class EnumByte:
 class BitFieldByte:
     """Class representing a single byte value as a bit field.
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the single byte value.
-        :type val: byte
-        :param loval: the list defining the name of the property represented by each bit.
-        :type loval: list
-        :returns: BitFieldByte instance.
-        :rtype: BitFieldByte
+    :param name: The name of the instance
+    :type name: str
+    :param val: the single byte value.
+    :type val: byte
+    :param loval: the list defining the name of the property represented by each bit.
+    :type loval: list
+    :returns: BitFieldByte instance.
+    :rtype: BitFieldByte
 
     """
 
@@ -267,12 +267,12 @@ class BitFieldByte:
 class IntByte:
     """Class representing a single byte as a signed integer.
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the integer value.
-        :type val: int
-        :returns: IntByte instance.
-        :rtype: IntByte
+    :param name: The name of the instance
+    :type name: str
+    :param val: the integer value.
+    :type val: int
+    :returns: IntByte instance.
+    :rtype: IntByte
 
     """
 
@@ -299,12 +299,12 @@ class IntByte:
 class UIntByte:
     """Class representing a single byte as an unsigned integer.
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the integer value.
-        :type val: int
-        :returns: UIntByte instance.
-        :rtype: UIntByte
+    :param name: The name of the instance
+    :type name: str
+    :param val: the integer value.
+    :type val: int
+    :returns: UIntByte instance.
+    :rtype: UIntByte
 
     """
 
@@ -331,14 +331,14 @@ class UIntByte:
 class ShortInt:
     """Class representing 2 bytes as a signed integer.
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the integer value.
-        :type val: int
-        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
-        :type endian: str
-        :returns: ShortInt instance.
-        :rtype: ShortInt
+    :param name: The name of the instance
+    :type name: str
+    :param val: the integer value.
+    :type val: int
+    :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+    :type endian: str
+    :returns: ShortInt instance.
+    :rtype: ShortInt
 
     """
 
@@ -372,14 +372,14 @@ class ShortInt:
 class UShortInt:
     """Class representing 2 bytes as an unsigned integer.
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the integer value.
-        :type val: int
-        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
-        :type endian: str
-        :returns: UShortInt instance.
-        :rtype: UShortInt
+    :param name: The name of the instance
+    :type name: str
+    :param val: the integer value.
+    :type val: int
+    :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+    :type endian: str
+    :returns: UShortInt instance.
+    :rtype: UShortInt
 
     """
 
@@ -413,14 +413,14 @@ class UShortInt:
 class LongInt:
     """Class representing 4 bytes as a signed integer.
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the integer value.
-        :type val: int
-        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
-        :type endian: str
-        :returns: LongInt instance.
-        :rtype: LongInt
+    :param name: The name of the instance
+    :type name: str
+    :param val: the integer value.
+    :type val: int
+    :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+    :type endian: str
+    :returns: LongInt instance.
+    :rtype: LongInt
 
     """
 
@@ -454,14 +454,14 @@ class LongInt:
 class ULongInt:
     """Class representing 4 bytes as an unsigned integer.
 
-        :param name: The name of the instance
-        :type name: str
-        :param val: the integer value.
-        :type val: int
-        :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
-        :type endian: str
-        :returns: ULongInt instance.
-        :rtype: ULongInt
+    :param name: The name of the instance
+    :type name: str
+    :param val: the integer value.
+    :type val: int
+    :param endian: Endianess of the bytes. "big" or no "big" (i.e. "little")
+    :type endian: str
+    :returns: ULongInt instance.
+    :rtype: ULongInt
 
     """
 
@@ -495,14 +495,14 @@ class ULongInt:
 class OgfOcf:
     """Class representing the 2 bytes that specify the command in an HCI command packet.
 
-        :param name: The name of the instance
-        :type name: str
-        :param ogf: the Op-code Group (6 bits).
-        :type ogf: bytes
-        :param ocf: the Op-code Command (10 bits).
-        :type ocf: bytes
-        :returns: OgfOcf instance.
-        :rtype: OgfOcf
+    :param name: The name of the instance
+    :type name: str
+    :param ogf: the Op-code Group (6 bits).
+    :type ogf: bytes
+    :param ocf: the Op-code Command (10 bits).
+    :type ocf: bytes
+    :returns: OgfOcf instance.
+    :rtype: OgfOcf
 
     """
 
@@ -535,10 +535,10 @@ class OgfOcf:
 class Itself:
     """Class representing a byte array that need no manipulation.
 
-        :param name: The name of the instance
-        :type name: str
-        :returns: Itself instance.
-        :rtype: Itself
+    :param name: The name of the instance
+    :type name: str
+    :returns: Itself instance.
+    :rtype: Itself
 
     """
 
@@ -570,10 +570,10 @@ class Itself:
 class String:
     """Class representing a string.
 
-        :param name: The name of the instance
-        :type name: str
-        :returns: String instance.
-        :rtype: String
+    :param name: The name of the instance
+    :type name: str
+    :returns: String instance.
+    :rtype: String
 
     """
 
@@ -602,12 +602,12 @@ class String:
 class NBytes:
     """Class representing a byte string.
 
-        :param name: The name of the instance
-        :type name: str
-        :param length: The length
-        :type length: int
-        :returns: NBytes instance.
-        :rtype: NBytes
+    :param name: The name of the instance
+    :type name: str
+    :param length: The length
+    :type length: int
+    :returns: NBytes instance.
+    :rtype: NBytes
 
     """
 
@@ -617,7 +617,7 @@ class NBytes:
         self.val = b""
 
     def encode(self):
-        return pack(">%ds" % len(self.length), self.val)
+        return pack(">%ds" % self.length, self.val)
 
     def decode(self, data):
         self.val = unpack(">%ds" % self.length, data[: self.length])[0][::-1]
@@ -643,12 +643,12 @@ class NBytes:
 class NBytes_List:
     """Class representing a list of bytes string.
 
-        :param name: The name of the instance
-        :type name: str
-        :param bytes: Length of the bytes strings (2, 4 or 16)
-        :type nbytes: int
-        :returns: NBytes_List instance.
-        :rtype: NBytes_List
+    :param name: The name of the instance
+    :type name: str
+    :param bytes: Length of the bytes strings (2, 4 or 16)
+    :type nbytes: int
+    :returns: NBytes_List instance.
+    :rtype: NBytes_List
 
     """
 
@@ -684,10 +684,10 @@ class NBytes_List:
 class Float88:
     """Class representing a 8.8 fixed point quantity.
 
-        :param name: The name of the instance
-        :type name: str
-        :returns: Float88 instance.
-        :rtype: Float88
+    :param name: The name of the instance
+    :type name: str
+    :returns: Float88 instance.
+    :rtype: Float88
 
     """
 
@@ -700,7 +700,7 @@ class Float88:
         return val
 
     def decode(self, data):
-        self.val = unpack(">h", data)[0] / 256.0
+        self.val = unpack(">h", data[:2])[0] / 256.0
         return data[2:]
 
     def __len__(self):
@@ -736,10 +736,10 @@ class EmptyPayload:
 class Packet:
     """Class representing a generic HCI packet.
 
-        :param header: The packet header.
-        :type header: bytes
-        :returns: Packet instance.
-        :rtype: Packet
+    :param header: The packet header.
+    :type header: bytes
+    :returns: Packet instance.
+    :rtype: Packet
 
     """
 
@@ -789,12 +789,12 @@ class Packet:
 class HCI_Command(Packet):
     """Class representing a command HCI packet.
 
-        :param ogf: the Op-code Group (6 bits).
-        :type ogf: bytes
-        :param ocf: the Op-code Command (10 bits).
-        :type ocf: bytes
-        :returns: HCI_Command instance.
-        :rtype: HCI_Command
+    :param ogf: the Op-code Group (6 bits).
+    :type ogf: bytes
+    :param ocf: the Op-code Command (10 bits).
+    :type ocf: bytes
+    :returns: HCI_Command instance.
+    :rtype: HCI_Command
 
     """
 
@@ -843,7 +843,7 @@ class RepeatedField(Packet):
 
 class HCI_Cmd_Read_Local_Supported_Commands(HCI_Command):
     """Class representing a HCI command to read commands supported by local
-       controller.
+    controller.
     """
 
     def __init__(self):
@@ -860,12 +860,12 @@ class HCI_Cmd_LE_Read_Local_Supported_Features(HCI_Command):
 class HCI_Cmd_LE_Scan_Enable(HCI_Command):
     """Class representing a command HCI command to enable/disable BLE scanning.
 
-        :param enable: enable/disable scanning.
-        :type enable: bool
-        :param filter_dups: filter duplicates.
-        :type filter_dups: bool
-        :returns: HCI_Cmd_LE_Scan_Enable instance.
-        :rtype: HCI_Cmd_LE_Scan_Enable
+    :param enable: enable/disable scanning.
+    :type enable: bool
+    :param filter_dups: filter duplicates.
+    :type filter_dups: bool
+    :returns: HCI_Cmd_LE_Scan_Enable instance.
+    :rtype: HCI_Cmd_LE_Scan_Enable
 
     """
 
@@ -953,10 +953,10 @@ class HCI_Cmd_LE_Set_Scan_Params(HCI_Command):
 class HCI_Cmd_LE_Advertise(HCI_Command):
     """Class representing a command HCI command to enable/disable BLE advertising.
 
-        :param enable: enable/disable advertising.
-        :type enable: bool
-        :returns: HCI_Cmd_LE_Scan_Enable instance.
-        :rtype: HCI_Cmd_LE_Scan_Enable
+    :param enable: enable/disable advertising.
+    :type enable: bool
+    :returns: HCI_Cmd_LE_Scan_Enable instance.
+    :rtype: HCI_Cmd_LE_Scan_Enable
 
     """
 
@@ -968,10 +968,10 @@ class HCI_Cmd_LE_Advertise(HCI_Command):
 class HCI_Cmd_LE_Set_Advertised_Msg(HCI_Command):
     """Class representing an HCI command to set the advertised content.
 
-        :param enable: enable/disable advertising.
-        :type enable: bool
-        :returns: HCI_Cmd_LE_Scan_Enable instance.
-        :rtype: HCI_Cmd_LE_Scan_Enable
+    :param enable: enable/disable advertising.
+    :type enable: bool
+    :returns: HCI_Cmd_LE_Scan_Enable instance.
+    :rtype: HCI_Cmd_LE_Scan_Enable
 
     """
 
@@ -1106,19 +1106,19 @@ class HCI_Cmd_LE_Set_Advertised_Params(HCI_Command):
 class HCI_Cmd_LE_Set_Extended_Scan_Enable(HCI_Command):
     """Class representing a HCI command to enable/disable BLE scanning.
 
-        :param enable: enable/disable scanning.
-        :type enable: bool
-        :param filter_dups: filter duplicates.
-        :param filter_dups: filter duplicates 0 => Duplicate filtering disabled
-                                              1 => Duplicate filtering enabled (default)
-                                              2 => Duplicate filtering enabled, reset for each scan period
-        :type filter_dups: int
-        :param duration: scan duration in ms. 0 as scan continuously until explicitly disable. Default 0.
-        :type duration: int
-        :param period: scan period in ms. 0 as scan continuously. Default 0.
-        :type period: int
-        :returns: HCI_Cmd_LE_Set_Extended_Scan_Enable instance.
-        :rtype: HCI_Cmd_LE_Set_Extended_Scan_Enable
+    :param enable: enable/disable scanning.
+    :type enable: bool
+    :param filter_dups: filter duplicates.
+    :param filter_dups: filter duplicates 0 => Duplicate filtering disabled
+                                          1 => Duplicate filtering enabled (default)
+                                          2 => Duplicate filtering enabled, reset for each scan period
+    :type filter_dups: int
+    :param duration: scan duration in ms. 0 as scan continuously until explicitly disable. Default 0.
+    :type duration: int
+    :param period: scan period in ms. 0 as scan continuously. Default 0.
+    :type period: int
+    :returns: HCI_Cmd_LE_Set_Extended_Scan_Enable instance.
+    :rtype: HCI_Cmd_LE_Set_Extended_Scan_Enable
 
     """
 
@@ -1264,8 +1264,8 @@ class HCI_Cmd_Reset(HCI_Command):
     """Class representing an HCI command to reset the adapater.
 
 
-        :returns: HCI_Cmd_Reset instance.
-        :rtype: HCI_Cmd_Reset
+    :returns: HCI_Cmd_Reset instance.
+    :rtype: HCI_Cmd_Reset
 
     """
 
