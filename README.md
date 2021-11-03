@@ -28,7 +28,11 @@ You can use Eddystone or RuuviWeather to retrieve specific information
 
 The easiest way is to look at the `__main__.py` file.
 
-You can run the module with
+You can run the command:
+
+    aioblescan
+
+or you can run the module with
 
     python3 -m aioblescan
 
