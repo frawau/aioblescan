@@ -65,6 +65,15 @@ You get
     Temperature info {'mac address': 'a4:c1:38:40:52:38', 'temperature': 2.8, 'humidity': 62, 'battery': 72, 'battery_volts': 2.863, 'counter': 103, 'rssi': -76}
     Temperature info {'mac address': 'a4:c1:38:40:52:38', 'temperature': 2.8, 'humidity': 62, 'battery': 72, 'battery_volts': 2.863, 'counter': 103, 'rssi': -77}
 
+To check ThermoBeacon sensors
+
+    python3 -m aioblescan -T
+
+You get
+
+    Temperature info {'mac address': '19:c4:00:00:0f:5d', 'max_temperature': 27.0625, 'min_temperature': 21.75, 'max_temp_ts': 0, 'min_temp_ts': 2309}
+    Temperature info {'mac address': '19:c4:00:00:0f:5d', 'temperature': 21.75, 'humidity': 49.5, 'battery_volts': 3234, 'counter': 2401, 'rssi': -67}
+
 For a generic advertise packet scanning
 
     python3 -m aioblescan

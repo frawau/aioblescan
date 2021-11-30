@@ -29,6 +29,7 @@ import aioblescan as aiobs
 from aioblescan.plugins import EddyStone
 from aioblescan.plugins import RuuviWeather
 from aioblescan.plugins import ATCMiThermometer
+from aioblescan.plugins import ThermoBeacon
 
 # global
 opts = None
@@ -79,6 +80,12 @@ def my_process(data):
         if xx:
             print("Temperature info {}".format(xx))
             return
+    if opts.thermobeacon:
+        noopt = False
+        xx = ThermoBeacon().decode(ev)
+        if xx:
+            print("Temperature info {}".format(xx))
+            return
     if noopt:
         ev.show(0)
 
@@ -114,6 +121,13 @@ def main(args=None):
         action="store_true",
         default=False,
         help="Look only for ATC_MiThermometer tag messages",
+    )
+    parser.add_argument(
+        "-T",
+        "--thermobeacon",
+        action="store_true",
+        default=False,
+        help="Look only for ThermoBeacon messages",
     )
     parser.add_argument(
         "-R",
