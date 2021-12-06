@@ -40,6 +40,7 @@ def parse(packet):
             if mac == mac_in_payload:
                 return parse_payload(mac, rssi, payload)
 
+
 def parse_payload(mac, rssi, payload):
     if len(payload) == 18:
         battery_volts = int.from_bytes(payload[8:10], "little")
@@ -64,10 +65,11 @@ def parse_payload(mac, rssi, payload):
             "max_temperature": max_temp,
             "min_temperature": min_temp,
             "max_temp_ts": max_temp_ts,
-            "min_temp_ts": min_temp_ts
+            "min_temp_ts": min_temp_ts,
         }
     else:
         return False
+
 
 class ThermoBeacon(object):
     """Class defining the content of a ThermoBeacon advertisement."""
