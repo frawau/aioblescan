@@ -1479,6 +1479,7 @@ class HCI_LEM_Ext_Adv_Report(Packet):
             self.payload.append(ad)
 
             datalength -= len(ad)
+        return data
 
     def show(self, depth=0):
         print("{}{}:".format(PRINT_INDENT * depth, self.name))
