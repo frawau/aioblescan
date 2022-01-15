@@ -1370,20 +1370,23 @@ class HCI_LEM_Adv_Report(Packet):
         ]
 
     def decode(self, data):
-
         for x in self.payload:
             data = x.decode(data)
+        packet_len=self.payload[3].val #get adv_report->length field 
         # Now we have a sequence of len, type data with possibly a RSSI byte at the end
-        while len(data) > 1:
+        while packet_len > 0:
             ad = AD_Structure()
             data = ad.decode(data)
             self.payload.append(ad)
-
+            packet_len = packet_len - ad.length
+            if ad.length==0: #sanity check to avoid infinity loop
+                packet_len =0
         if data:
             myinfo = IntByte("rssi")
             data = myinfo.decode(data)
             self.payload.append(myinfo)
         return data
+
 
     def show(self, depth=0):
         print("{}{}:".format(PRINT_INDENT * depth, self.name))
