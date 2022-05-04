@@ -376,7 +376,6 @@ class EddyStone(object):
             data = myinfo.decode(data)
             found.payload.append(myinfo)
             result["uptime"] = myinfo.val * 100  # in msecs
-            return result
         # elif etype.val== ESType.tlm.eid:
         else:
             result["data"] = data
