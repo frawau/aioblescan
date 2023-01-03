@@ -34,6 +34,7 @@ from aioblescan.plugins import Tilt
 
 # global
 opts = None
+decoders = []
 
 
 def check_mac(val):
@@ -62,38 +63,16 @@ def my_process(data):
 
     if opts.raw:
         print("Raw data: {}".format(ev.raw_data))
-    noopt = True
-    if opts.eddy:
-        noopt = False
-        xx = EddyStone().decode(ev)
-        if xx:
-            print("Google Beacon {}".format(xx))
-            return
-    if opts.ruuvi:
-        noopt = False
-        xx = RuuviWeather().decode(ev)
-        if xx:
-            print("Weather info {}".format(xx))
-            return
-    if opts.atcmi:
-        noopt = False
-        xx = ATCMiThermometer().decode(ev)
-        if xx:
-            print("Temperature info {}".format(xx))
-            return
-    if opts.thermobeacon:
-        noopt = False
-        xx = ThermoBeacon().decode(ev)
-        if xx:
-            print("Temperature info {}".format(xx))
-            return
-    if opts.tilt:
-        noopt = False
-        xx = Tilt().decode(ev)
-        if xx:
-            print("{}".format(xx))
-            return
-    if noopt:
+    if decoders:
+        for leader, decoder in decoders:
+            xx = decoder.decode(ev)
+            if xx:
+                if opts.leader:
+                    print("{} {}".format(leader, xx))
+                else:
+                    print("{}".format(xx))
+                break
+    else:
         ev.show(0)
 
 
@@ -106,7 +85,7 @@ def main(args=None):
         "--eddy",
         action="store_true",
         default=False,
-        help="Look specificaly for Eddystone messages.",
+        help="Look specifically for Eddystone messages.",
     )
     parser.add_argument(
         "-m",
@@ -173,15 +152,31 @@ def main(args=None):
     )
     parser.add_argument(
         "--tilt",
-        action='store_true',
+        action="store_true",
         default=False,
-        help="Look only for Tilt.",
+        help="Look only for Tilt hydrometer messages",
+    )
+    parser.add_argument(
+        "--skip-leader",
+        action="store_false",
+        dest="leader",
+        help="suppress leading text identifier",
     )
     try:
         opts = parser.parse_args()
     except Exception as e:
         parser.error("Error: " + str(e))
-        sys.exit()
+
+    if opts.eddy:
+        decoders.append(("Google Beacon", EddyStone()))
+    if opts.ruuvi:
+        decoders.append(("Weather info", RuuviWeather()))
+    if opts.atcmi:
+        decoders.append(("Temperature info", ATCMiThermometer()))
+    if opts.thermobeacon:
+        decoders.append(("Temperature info", ThermoBeacon()))
+    if opts.tilt:
+        decoders.append(("Tilt", Tilt()))
 
     event_loop = asyncio.get_event_loop()
 
