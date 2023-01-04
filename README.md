@@ -6,7 +6,8 @@ aioblescan is a Python 3/asyncio library to listen for BLE advertized packets.
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-licen)
 [![GITHUB-BADGE](https://github.com/frawau/aioblescan/workflows/black/badge.svg)](https://github.com/psf/black)
 [![Downloads](https://pepy.tech/badge/aioblescan/month)](https://pepy.tech/project/aioblescan)
-# Installation
+
+## Installation
 
 We are on PyPi so
 
@@ -15,16 +16,13 @@ or
 
      python3 -m pip install aioblescan
 
-
-
-# How to use
+## How to use
 
 Essentially, you create a function to process the incoming
 information and you attach it to the `BTScanRequester`. You then create a Bluetooth
 connection, you issue the scan command and wait for incoming packets and process them.
 
 You can use Eddystone or RuuviWeather to retrieve specific information
-
 
 The easiest way is to look at the `__main__.py` file.
 
@@ -146,11 +144,51 @@ You get
 
 Here the first packet is from a Wynd device, the second from a Ruuvi Tag
 
-
 aioblescan can also send EddyStone advertising. Try the -a flag when running the module.
 
+To check Tilt hydrometer
 
-# FAQ
+    python3 -m aioblescan --tilt
+
+You will see the regular Bluetooth beacons from any Tilt in range:
+
+    {"uuid": "a495bb40c5b14b44b5121370f02d74de", "major": 70, "minor": 1054, "tx_power": 31, "rssi": -58, "mac": "xx:xx:xx:xx:xx:xx"}
+    {"uuid": "a495bb40c5b14b44b5121370f02d74de", "major": 70, "minor": 1054, "tx_power": 31, "rssi": -74, "mac": "xx:xx:xx:xx:xx:xx"}
+    {"uuid": "a495bb40c5b14b44b5121370f02d74de", "major": 70, "minor": 1054, "tx_power": 31, "rssi": -57, "mac": "xx:xx:xx:xx:xx:xx"}
+
+Hit `ctrl-c` to stop the scan.
+
+## Interpreting the Tilt Data
+
+The information from the tilt plugin is returned as a valid JSON:
+
+    {
+    "uuid": "a495bb40c5b14b44b5121370f02d74de",
+    "major": 69,
+    "minor": 1056,
+    "tx_power": 31,
+    "rssi": -49,
+    "mac": "xx:xx:xx:xx:xx:xx"
+    }
+
+These keys may be interpreted as:
+
+- **uuid**:  Tilt name.  The "40" in a495bb`40`c5b14b44b5121370f02d74de is an indication of the color.
+  - 10: Red
+  - 20: Green
+  - 30: Black
+  - 40: Purple
+  - 50: Orange
+  - 60: Blue
+  - 70: Yellow
+  - 80: Pink
+- **major**: Temp in degrees F.
+- **minor**: Specific gravity x1000.
+- **tx_power**: Weeks since battery change (0-152 when converted to unsigned 8 bit integer).  You will occasionally see `-59` which is there to allow iOS to compute RSSI.  This value should be discarded.
+- **rssi**: Received Signal Strength Indication (RSSI) is a measurement of the power present in the received radio signal.  A lower negative number is stronger.
+- **mac**: Media Access Control (MAC) address of the device.
+
+## FAQ
 
 Why not use scapy?
 
