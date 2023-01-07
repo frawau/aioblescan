@@ -76,10 +76,8 @@ def my_process(data):
         ev.show(0)
 
 
-
 async def amain(args=None):
     global opts
-
 
     event_loop = asyncio.get_running_loop()
 
@@ -121,7 +119,7 @@ async def amain(args=None):
         print("keyboard interrupt")
     finally:
         print("closing event loop")
-        #event_loop.run_until_complete(btctrl.stop_scan_request())
+        # event_loop.run_until_complete(btctrl.stop_scan_request())
         await btctrl.stop_scan_request()
         command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
         await btctrl.send_command(command)
