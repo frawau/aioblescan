@@ -126,7 +126,9 @@ async def amain(args=None):
         conn.close()
 
 
-if __name__ == "__main__":
+def main():
+    global opts
+
     parser = argparse.ArgumentParser(description="Track BLE advertised packets")
     parser.add_argument(
         "-e",
@@ -158,6 +160,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-T",
+
         "--thermobeacon",
         action="store_true",
         default=False,
@@ -170,6 +173,7 @@ if __name__ == "__main__":
         default=False,
         help="Also show the raw data.",
     )
+
     parser.add_argument(
         "-a",
         "--advertise",
@@ -229,3 +233,6 @@ if __name__ == "__main__":
         asyncio.run(amain())
     except:
         pass
+
+if __name__ == "__main__":
+    main()
