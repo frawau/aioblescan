@@ -76,9 +76,59 @@ def my_process(data):
         ev.show(0)
 
 
-def main(args=None):
+
+async def amain(args=None):
     global opts
 
+
+    event_loop = asyncio.get_running_loop()
+
+    # First create and configure a raw socket
+    mysocket = aiobs.create_bt_socket(opts.device)
+
+    # create a connection with the raw socket
+    # This used to work but now requires a STREAM socket.
+    # fac=event_loop.create_connection(aiobs.BLEScanRequester,sock=mysocket)
+    # Thanks to martensjacobs for this fix
+    conn, btctrl = await event_loop._create_connection_transport(
+        mysocket, aiobs.BLEScanRequester, None, None
+    )
+    # Attach your processing
+    btctrl.process = my_process
+    if opts.advertise:
+        command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
+        await btctrl.send_command(command)
+        command = aiobs.HCI_Cmd_LE_Set_Advertised_Params(
+            interval_min=opts.advertise, interval_max=opts.advertise
+        )
+        await btctrl.send_command(command)
+        if opts.url:
+            myeddy = EddyStone(param=opts.url)
+        else:
+            myeddy = EddyStone()
+        if opts.txpower:
+            myeddy.power = opts.txpower
+        command = aiobs.HCI_Cmd_LE_Set_Advertised_Msg(msg=myeddy)
+        await btctrl.send_command(command)
+        command = aiobs.HCI_Cmd_LE_Advertise(enable=True)
+        await btctrl.send_command(command)
+    # Probe
+    await btctrl.send_scan_request()
+    try:
+        while True:
+            await asyncio.sleep(3600)
+    except KeyboardInterrupt:
+        print("keyboard interrupt")
+    finally:
+        print("closing event loop")
+        #event_loop.run_until_complete(btctrl.stop_scan_request())
+        await btctrl.stop_scan_request()
+        command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
+        await btctrl.send_command(command)
+        conn.close()
+
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Track BLE advertised packets")
     parser.add_argument(
         "-e",
@@ -177,56 +227,7 @@ def main(args=None):
         decoders.append(("Temperature info", ThermoBeacon()))
     if opts.tilt:
         decoders.append(("Tilt", Tilt()))
-
-    event_loop = asyncio.get_event_loop()
-
-    # First create and configure a raw socket
-    mysocket = aiobs.create_bt_socket(opts.device)
-
-    # create a connection with the raw socket
-    # This used to work but now requires a STREAM socket.
-    # fac=event_loop.create_connection(aiobs.BLEScanRequester,sock=mysocket)
-    # Thanks to martensjacobs for this fix
-    fac = event_loop._create_connection_transport(
-        mysocket, aiobs.BLEScanRequester, None, None
-    )
-    # Start it
-    conn, btctrl = event_loop.run_until_complete(fac)
-    # Attach your processing
-    btctrl.process = my_process
-    if opts.advertise:
-        command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
-        event_loop.run_until_complete(btctrl.send_command(command))
-        command = aiobs.HCI_Cmd_LE_Set_Advertised_Params(
-            interval_min=opts.advertise, interval_max=opts.advertise
-        )
-        event_loop.run_until_complete(btctrl.send_command(command))
-        if opts.url:
-            myeddy = EddyStone(param=opts.url)
-        else:
-            myeddy = EddyStone()
-        if opts.txpower:
-            myeddy.power = opts.txpower
-        command = aiobs.HCI_Cmd_LE_Set_Advertised_Msg(msg=myeddy)
-        event_loop.run_until_complete(btctrl.send_command(command))
-        command = aiobs.HCI_Cmd_LE_Advertise(enable=True)
-        event_loop.run_until_complete(btctrl.send_command(command))
-
-    # Probe
-    event_loop.run_until_complete(btctrl.send_scan_request())
     try:
-        # event_loop.run_until_complete(coro)
-        event_loop.run_forever()
-    except KeyboardInterrupt:
-        print("keyboard interrupt")
-    finally:
-        print("closing event loop")
-        event_loop.run_until_complete(btctrl.stop_scan_request())
-        command = aiobs.HCI_Cmd_LE_Advertise(enable=False)
-        event_loop.run_until_complete(btctrl.send_command(command))
-        conn.close()
-        event_loop.close()
-
-
-if __name__ == "__main__":
-    main()
+        asyncio.run(amain())
+    except:
+        pass

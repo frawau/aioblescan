@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 import setuptools
 
-version = "0.2.13"
+version = "0.2.14"
 
 with open("README.rst", "r") as fh:
     long_description = fh.read()
@@ -28,12 +28,10 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     entry_points={"console_scripts": ["aioblescan=aioblescan.__main__:main"]},
     zip_safe=False,
