@@ -25,6 +25,7 @@ import sys
 import asyncio
 import argparse
 import re
+import json
 import aioblescan as aiobs
 from aioblescan.plugins import EddyStone
 from aioblescan.plugins import RuuviWeather
@@ -68,9 +69,9 @@ def my_process(data):
             xx = decoder.decode(ev)
             if xx:
                 if opts.leader:
-                    print("{} {}".format(leader, xx))
+                    print(f"{leader} {json.dumps(xx)}")
                 else:
-                    print("{}".format(xx))
+                    print(f"{json.dumps(xx)}")
                 break
     else:
         ev.show(0)
@@ -160,7 +161,6 @@ def main():
     )
     parser.add_argument(
         "-T",
-
         "--thermobeacon",
         action="store_true",
         default=False,
@@ -233,6 +233,7 @@ def main():
         asyncio.run(amain())
     except:
         pass
+
 
 if __name__ == "__main__":
     main()
