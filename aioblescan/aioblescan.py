@@ -1799,24 +1799,16 @@ class BLEScanRequester(asyncio.Protocol):
     def connection_lost(self, exc):
         super().connection_lost(exc)
 
-    async def send_scan_request(self, isactivescan=False):
+    async def send_scan_request(self, filter_dups:int=0):
         """Sending LE scan request"""
         await self._initialized.wait()
 
         if self._use_ext_scan():
-            sparam = [int(isactivescan)] * 8
-            command = HCI_Cmd_LE_Set_Extended_Scan_Params(scan_type=sparam)
-            self._send_command_no_wait(command)
-
-            command = HCI_Cmd_LE_Set_Extended_Scan_Enable(True, 0)
-            return self._send_command_no_wait(command)
+            command = HCI_Cmd_LE_Set_Extended_Scan_Enable(True, filter_dups)
         else:
-            sparam = int(isactivescan)
-            command = HCI_Cmd_LE_Set_Scan_Params(scan_type=sparam)
-            self._send_command_no_wait(command)
-
-            command = HCI_Cmd_LE_Scan_Enable(True, False)
-            return self._send_command_no_wait(command)
+            command = HCI_Cmd_LE_Scan_Enable(True, bool(filter_dups))
+        
+        return self._send_command_no_wait(command)
 
     async def stop_scan_request(self):
         """Sending LE scan request"""
